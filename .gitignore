@@ -1,0 +1,54 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+# SQLite
+*.db
+*.sqlite3
+
+# Pytest
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Type checker caches
+.mypy_cache/
+.pyre/
+.pytype/
+
+# Linter caches
+.ruff_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Python version manager
+.python-version
+
+# SQLite databases
+*.sqlite3
+*.db
+
+# Local configuration
+local_settings.py
+
+.env
+
+# Virtual environments
+.venv/
+venv/
+uv.lock.tmp
