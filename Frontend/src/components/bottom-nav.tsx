@@ -8,7 +8,7 @@ const TABS = [
   { label: "Home", to: "/dashboard", icon: House },
   { label: "Stock", to: "/inventory", icon: Package },
   { label: "History", to: "/transactions", icon: ArrowsLeftRight },
-  { label: "Owing", to: "/transactions", icon: BookOpen },
+  { label: "Owing", to: "/debtors", icon: BookOpen },
 ] as const;
 
 interface TabProps {
