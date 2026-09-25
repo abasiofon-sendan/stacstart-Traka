@@ -2,14 +2,18 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from main import app
 from app.db.database import Base, get_db
 
+# Shared in-memory DB across threads (see test_accounts.py).
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -51,7 +55,7 @@ def setup_account():
 def test_create_debtor():
     setup_account()
     response = client.post(
-        "/debtors",
+        "/debtors/new",
         json={
             "name": "John Doe",
             "amount": 500.0,
@@ -75,9 +79,11 @@ def test_create_debtor():
 
 def test_get_debtors():
     setup_account()
-    response = client.get("/debtors")
+    response = client.get("/debtors/all")
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
+    data = response.json()
+    assert "total_outstanding" in data
+    assert isinstance(data["debtors"], list)
 
 def test_get_debtor_link():
     debtor_id = test_create_debtor()
@@ -85,3 +91,9 @@ def test_get_debtor_link():
     assert response.status_code == 200
     data = response.json()
     assert data["link"] == f"pay.traka/d-{debtor_id.replace('d-', '')}"
+
+def test_settle_debt():
+    debtor_id = test_create_debtor()
+    response = client.post(f"/debtors/{debtor_id}/settle")
+    assert response.status_code == 200
+    assert response.json()["message"] == "Debt settled successfully"

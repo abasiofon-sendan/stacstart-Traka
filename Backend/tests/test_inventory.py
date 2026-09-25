@@ -1,16 +1,20 @@
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 from unittest.mock import patch
 import uuid
 
 from main import app
 from app.db.database import Base, get_db
 
+# Shared in-memory DB across threads (see test_accounts.py).
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -100,13 +104,13 @@ def test_delete_product():
 def test_extract_product():
     setup_account()
     with patch("app.inventory.service.extract_product_from_images") as mock_extract:
-        mock_extract.return_value = "Peak Milk Tin (400g)"
-        
+        mock_extract.return_value = [{"index": 0, "name": "Peak Milk Tin (400g)"}]
+
         file_content = b"fake image content"
         response = client.post(
             "/inventory/extract-product",
             files={"images": ("test.jpg", file_content, "image/jpeg")}
         )
         assert response.status_code == 200
-        assert response.json()["name"] == "Peak Milk Tin (400g)"
+        assert response.json()["names"] == ["Peak Milk Tin (400g)"]
         mock_extract.assert_called_once()
