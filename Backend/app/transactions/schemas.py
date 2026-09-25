@@ -31,6 +31,17 @@ class ReconcileRequest(BaseModel):
     repayment_amount: Optional[float] = None
 
 
+# ─── Direct creation (e.g. debt settlement) ───────────────────────────────────
+
+class TransactionCreate(BaseModel):
+    title: str
+    details: Optional[str] = None
+    amount: float
+    profit: float = 0.0
+    payment_method: Optional[str] = None
+    transaction_type: Optional[str] = None  # "sale" | "debt_repayment"
+
+
 # ─── GET /unallocated — everything the modal needs to render ──────────────────
 
 class UnallocatedTransactionResponse(BaseModel):

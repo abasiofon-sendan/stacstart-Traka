@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from app.transactions import models as tx_models
+from app.transactions import schemas as tx_schemas
 from app.inventory import models as inv_models
 from app.debtors import models as debtor_models
 from app.activity.service import log_activity
@@ -30,6 +31,30 @@ def get_unallocated(db: Session, account_id: str) -> List[tx_models.Transaction]
         .order_by(tx_models.Transaction.created_at.desc())
         .all()
     )
+
+
+# ─── Direct creation (e.g. recording a debt settlement) ───────────────────────
+
+def create_transaction(
+    db: Session,
+    transaction_in: tx_schemas.TransactionCreate,
+    account_id: str,
+) -> tx_models.Transaction:
+    """
+    Persists a fully-formed ledger entry in one step. Used by flows that
+    originate inside the API (such as debt settlement) rather than from an
+    inbound gateway transfer, so the row is created already reconciled.
+    """
+    txn = tx_models.Transaction(
+        account_id=account_id,
+        reference=f"TXN-{uuid.uuid4().hex[:10].upper()}",
+        status="reconciled",
+        **transaction_in.model_dump(),
+    )
+    db.add(txn)
+    db.commit()
+    db.refresh(txn)
+    return txn
 
 
 # ─── Shared basket helper ────────────────────────────────────────────────────
