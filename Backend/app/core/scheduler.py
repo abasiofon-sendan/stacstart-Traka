@@ -8,13 +8,13 @@ from app.notifications.service import create_notification
 def check_low_stock():
     db = SessionLocal()
     try:
-        products = db.query(Product).filter(Product.stock <= Product.low_stock_threshold).all()
+        products = db.query(Product).filter(Product.quantity <= Product.low_stock_threshold).all()
         for p in products:
             create_notification(
                 db=db,
                 account_id=p.account_id,
                 title="Low Stock Alert",
-                message=f"Product '{p.name}' is low on stock ({p.stock} remaining)."
+                message=f"Product '{p.name}' is low on stock ({p.quantity} remaining)."
             )
     finally:
         db.close()
