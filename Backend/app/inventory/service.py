@@ -99,19 +99,48 @@ _SINGLE_PROMPT = (
     "If you cannot clearly identify the product, return exactly: UNREADABLE"
 )
 
-_GEMINI_MODEL = 'gemini-3.5-flash'
+_GEMINI_MODEL = os.getenv("GEMINI_VISION_MODEL", "gemini-3.8-flash")
+# Fallbacks when the primary model is overloaded (503) or retired (404).
+_GEMINI_FALLBACKS = (
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-flash-latest",
+)
 
 
 def _extract_single(img_bytes: bytes, mime_type: str):
-    """One Gemini call for one image. Returns product name string or None."""
-    response = client.models.generate_content(
-        model=_GEMINI_MODEL,
-        contents=[
-            _SINGLE_PROMPT,
-            types.Part.from_bytes(data=img_bytes, mime_type=mime_type)
-        ]
-    )
-    result = response.text.strip()
+    """One Gemini call for one image. Returns product name string or None.
+
+    Tries the primary model then fallbacks. Google API outages surface as
+    HTTPException(502/503) with Google's message — never an opaque 500.
+    """
+    from google.genai import errors as genai_errors
+
+    last_err: Exception | None = None
+    for model in (_GEMINI_MODEL, *_GEMINI_FALLBACKS):
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=[
+                    _SINGLE_PROMPT,
+                    types.Part.from_bytes(data=img_bytes, mime_type=mime_type)
+                ]
+            )
+            break
+        except genai_errors.APIError as exc:
+            last_err = exc
+            if exc.code in (404, 503):
+                continue  # retired or overloaded — try next model
+            raise HTTPException(
+                status_code=502,
+                detail=f"Product recognition failed ({exc.code}): {exc.message}",
+            )
+    else:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Product recognition is temporarily overloaded: {last_err}",
+        )
+    result = (response.text or "").strip()
     return None if (not result or result.upper() == "UNREADABLE") else result
 
 
