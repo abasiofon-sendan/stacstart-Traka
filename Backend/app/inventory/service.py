@@ -99,7 +99,7 @@ _SINGLE_PROMPT = (
     "If you cannot clearly identify the product, return exactly: UNREADABLE"
 )
 
-_GEMINI_MODEL = 'gemini-3.5-flash'
+_GEMINI_MODEL = os.getenv("GEMINI_VISION_MODEL", "gemini-3.8-flash")
 
 
 def _extract_single(img_bytes: bytes, mime_type: str):
@@ -111,7 +111,7 @@ def _extract_single(img_bytes: bytes, mime_type: str):
             types.Part.from_bytes(data=img_bytes, mime_type=mime_type)
         ]
     )
-    result = response.text.strip()
+    result = (response.text or "").strip()
     return None if (not result or result.upper() == "UNREADABLE") else result
 
 
