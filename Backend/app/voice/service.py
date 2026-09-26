@@ -7,6 +7,8 @@ from app.debtors import models as debtor_models
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE    = "https://api.groq.com/openai/v1"
+# llama-3.3-70b-versatile was retired by Groq; override via GROQ_CHAT_MODEL if needed.
+GROQ_CHAT_MODEL = os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b")
 
 # ─── Language map ─────────────────────────────────────────────────────────────
 # Whisper returns BCP-47 codes. We map them to human instructions for the LLM.
@@ -25,15 +27,29 @@ def _lang_instruction(whisper_lang: str) -> str:
 
 # ─── Step 1: Transcribe with Groq Whisper ─────────────────────────────────────
 
+def _guess_mime(filename: str) -> str:
+    name = (filename or "").lower()
+    if name.endswith((".ogg", ".oga", ".opus")):
+        return "audio/ogg"
+    if name.endswith(".mp3"):
+        return "audio/mpeg"
+    if name.endswith(".m4a"):
+        return "audio/m4a"
+    if name.endswith(".wav"):
+        return "audio/wav"
+    return "audio/webm"
+
+
 def groq_transcribe(audio_bytes: bytes, filename: str) -> dict:
     """
     Sends audio bytes to Groq Whisper.
     Returns { "text": str, "language": str } where language is a BCP-47 code.
+    Accepts webm (web app), ogg/opus (WhatsApp voice notes), mp3, m4a, wav.
     """
     headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
 
     files = {
-        "file":            (filename, audio_bytes, "audio/webm"),
+        "file":            (filename, audio_bytes, _guess_mime(filename)),
         "model":           (None, "whisper-large-v3"),
         "response_format": (None, "verbose_json"),  # includes language field
     }
@@ -109,13 +125,13 @@ Never make up data — only use the facts below.
         "Content-Type":  "application/json",
     }
     body = {
-        "model": "llama-3.3-70b-versatile",
+        "model": GROQ_CHAT_MODEL,
         "messages": [
             {"role": "system",  "content": system_prompt},
             {"role": "user",    "content": transcript},
         ],
         "temperature": 0.4,
-        "max_tokens":  256,
+        "max_tokens":  1024,  # headroom: reasoning models consume tokens before answering
     }
 
     resp = httpx.post(

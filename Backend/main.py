@@ -15,6 +15,7 @@ from app.simulation.router import router as simulation_router
 from app.voice.router import router as voice_router
 from app.transactions.router import router as transactions_router
 from app.webhooks.router import router as webhooks_router
+from app.webhooks.whatsapp_twilio import router as whatsapp_twilio_router
 
 # Import all models to ensure they are registered with Base before create_all
 from app.accounts import models as accounts_models
@@ -52,6 +53,7 @@ app.include_router(activity_router)
 app.include_router(notifications_router)
 app.include_router(reports_router)
 app.include_router(webhooks_router)
+app.include_router(whatsapp_twilio_router)
 app.include_router(simulation_router)
 app.include_router(voice_router)
 
