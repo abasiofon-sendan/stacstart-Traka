@@ -12,8 +12,6 @@ const AI_CHIPS: Record<AiLanguage, string[]> = {
   pidgin: ["Who dey owe me?", "How much profit I make today?", "Inventory wey remain"],
 };
 
-let voiceMsgCounter = 0;
-
 interface AiState {
   chatLogs: string[];
   chatAudioUrls: Record<number, string>;
@@ -78,7 +76,11 @@ export const useAiStore = create<AiState>()((set, get) => ({
     set({ aiLoading: true });
     try {
       const context = buildContext();
-      const msgIdx = voiceMsgCounter++;
+      // Key the recording by the chatLogs index it is about to occupy, not a
+      // standalone counter. The bubble renders chatAudioUrls[i] where i is the
+      // log index — a separate counter drifts after any text/bot message and
+      // the lookup misses, leaving just the bare 🎤 glyph with no player.
+      const msgIdx = get().chatLogs.length;
       set((s) => ({
         chatAudioUrls: { ...s.chatAudioUrls, [msgIdx]: audioUrl },
         chatLogs: [...s.chatLogs, "user:🎤"],
