@@ -9,7 +9,10 @@ import { useSessionStore } from "./session-store";
 import { useInventoryStore } from "./inventory-store";
 import { useDebtorsStore } from "./debtors-store";
 
-const MARKETING_ROUTES = ["/", "/auth", "/auth/register"];
+// Routes that render no app data. /auth/whatsapp is the post-signup step —
+// it polls its own /accounts/whatsapp-status but must not pull the whole
+// dashboard down before the merchant has actually entered the app.
+const MARKETING_ROUTES = ["/", "/auth", "/auth/register", "/auth/whatsapp"];
 
 interface StoreBootstrapProps {
   children: ReactNode;

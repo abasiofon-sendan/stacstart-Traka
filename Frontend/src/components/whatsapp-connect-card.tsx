@@ -115,14 +115,14 @@ export function WhatsAppConnectCard({
             </p>
           ) : (
             <>
-              <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
                 {setupLoading ? (
-                  <Button className="flex-1" disabled>
+                  <Button className="w-full sm:w-auto" disabled>
                     Preparing WhatsApp…
                   </Button>
                 ) : (
                   <Button
-                    className="flex-1"
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       if (setup?.wa_link) window.open(setup.wa_link, "_blank");
                     }}
@@ -134,6 +134,7 @@ export function WhatsAppConnectCard({
                 )}
                 <Button
                   variant="secondary"
+                  className="w-full sm:w-auto"
                   onClick={copyJoinMessage}
                   disabled={!setup?.join_message}
                 >

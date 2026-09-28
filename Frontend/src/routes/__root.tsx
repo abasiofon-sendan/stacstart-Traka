@@ -41,7 +41,12 @@ function RootLayout() {
 
   const isLanding = location.pathname === "/";
   const isSandbox = location.pathname === "/sandbox";
-  const isAuth = location.pathname === "/auth" || location.pathname === "/auth/register";
+  const isAuth =
+    location.pathname === "/auth" ||
+    location.pathname === "/auth/register" ||
+    // Post-signup onboarding still renders AuthShell, so it must stay
+    // chrome-free like the other auth screens.
+    location.pathname === "/auth/whatsapp";
   // App chrome (sidebar, header, bottom nav) must never render on the
   // marketing/landing or auth routes, even when signed in.
   const showAppChrome = authenticated && !isLanding && !isAuth;
