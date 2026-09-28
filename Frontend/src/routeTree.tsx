@@ -3,6 +3,7 @@ import { Route as RootRoute } from "@/routes/__root";
 import { Route as IndexRoute } from "@/routes/index";
 import { Route as AuthRoute } from "@/routes/auth";
 import { Route as AuthRegisterRoute } from "@/routes/auth-register";
+import { Route as AuthWhatsAppRoute } from "@/routes/auth-whatsapp";
 import { Route as DashboardRoute } from "@/routes/dashboard";
 import { Route as InventoryRoute } from "@/routes/inventory";
 import { Route as DebtorsRoute } from "@/routes/debtors";
@@ -16,6 +17,7 @@ const routeTree = RootRoute.addChildren([
   IndexRoute,
   AuthRoute,
   AuthRegisterRoute,
+  AuthWhatsAppRoute,
   DashboardRoute,
   InventoryRoute,
   DebtorsRoute,

@@ -21,6 +21,10 @@ import {
 
 export const queryKeys = {
   me: ["me"] as const,
+  whatsapp: {
+    setup: ["whatsapp", "setup"] as const,
+    status: ["whatsapp", "status"] as const,
+  },
   inventory: { all: ["inventory"] as const, detail: (id: string) => ["inventory", id] as const },
   transactions: { all: ["transactions"] as const, unallocated: ["transactions", "unallocated"] as const },
   debtors: { all: ["debtors"] as const },
@@ -40,6 +44,36 @@ export function useSignup() {
 export function useLogin() {
   return useMutation({
     mutationFn: (data: AccountLogin) => accountsApi.login(data),
+  });
+}
+
+/* ─── WhatsApp linking ─── */
+
+/** Public sandbox join config (number, code, wa.me link). Stable — no polling. */
+export function useWhatsAppSetup(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.whatsapp.setup,
+    queryFn: () => accountsApi.whatsappSetup(),
+    enabled,
+    staleTime: 1000 * 60 * 30,
+    retry: 1,
+  });
+}
+
+/**
+ * Polls "has this account's number messaged us yet" until it flips true.
+ * Stops polling on success so we don't keep hitting the API once connected.
+ */
+export function useWhatsAppStatus(enabled = true, poll = true) {
+  return useQuery({
+    queryKey: queryKeys.whatsapp.status,
+    queryFn: () => accountsApi.whatsappStatus(),
+    enabled,
+    refetchInterval: (query) => {
+      if (!poll) return false;
+      return query.state.data?.linked ? false : 4_000;
+    },
+    retry: 1,
   });
 }
 

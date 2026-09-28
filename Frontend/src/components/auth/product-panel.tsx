@@ -16,6 +16,7 @@ interface ProductPanelProps {
 const PANEL_META: Record<AuthVariant, string> = {
   signin: "DAILY CLOSE",
   signup: "VOICE HELPER",
+  whatsapp: "CHAT TO LEDGER",
 };
 
 /**

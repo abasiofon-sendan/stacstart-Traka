@@ -3,6 +3,7 @@ import { createRoute } from "@tanstack/react-router";
 import { Route as RootRoute } from "@/routes/__root";
 import { Bank, EnvelopeSimple, SignOut, User } from "@phosphor-icons/react";
 import { PageHeader } from "@/components/page-header";
+import { WhatsAppConnectCard } from "@/components/whatsapp-connect-card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,6 +50,8 @@ function SettingsPage() {
       />
 
       <div className="grid gap-5 lg:grid-cols-2">
+        <WhatsAppConnectCard poll={false} className="lg:col-span-2" />
+
         {/* Profile */}
         <section className="rounded-sm border border-border bg-card p-5">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">

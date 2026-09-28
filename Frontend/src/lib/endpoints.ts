@@ -201,6 +201,20 @@ export interface AccountMeResponse {
   virtual_account_number: string;
 }
 
+export interface WhatsAppSetupResponse {
+  sandbox_number: string;
+  join_code: string;
+  join_message: string;
+  wa_link: string;
+  trial_note: string;
+}
+
+export interface WhatsAppStatusResponse {
+  linked: boolean;
+  sender?: string | null;
+  last_seen?: string | null;
+}
+
 export const accountsApi = {
   signup: (data: AccountCreate) =>
     api.post<TokenResponse>("/accounts/signup", data).then((r) => r.data),
@@ -210,6 +224,14 @@ export const accountsApi = {
 
   me: () =>
     api.get<AccountMeResponse>("/accounts/me").then((r) => r.data),
+
+  /** Public join config for the Twilio sandbox — no auth needed. */
+  whatsappSetup: () =>
+    api.get<WhatsAppSetupResponse>("/accounts/whatsapp-setup").then((r) => r.data),
+
+  /** Has this account's number messaged us yet? */
+  whatsappStatus: () =>
+    api.get<WhatsAppStatusResponse>("/accounts/whatsapp-status").then((r) => r.data),
 };
 
 /* ─── Inventory / Products ─── */

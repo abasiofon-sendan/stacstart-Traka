@@ -37,6 +37,19 @@ export function OnboardingEmptyState({ onAddProduct }: OnboardingEmptyStateProps
         </Button>
       </div>
 
+      <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-5">
+        <p className="text-sm text-muted-foreground">
+          Rather type than tap?
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/auth/whatsapp" })}
+          className="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-semibold text-primary underline underline-offset-4 transition-colors hover:text-primary-bright"
+        >
+          Log debts from WhatsApp
+        </button>
+      </div>
+
       <div className="mt-7">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Quick start

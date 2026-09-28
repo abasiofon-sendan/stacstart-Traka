@@ -4,7 +4,7 @@ import { ArrowLeft } from "@phosphor-icons/react";
 import { ProductPanel } from "./product-panel";
 import { LogoLockup } from "./logo-lockup";
 
-export type AuthVariant = "signin" | "signup";
+export type AuthVariant = "signin" | "signup" | "whatsapp";
 
 interface AuthShellProps {
   variant: AuthVariant;
@@ -13,15 +13,18 @@ interface AuthShellProps {
 
 const ALT_LINK: Record<
   AuthVariant,
-  { prompt: string; label: string; to: "/auth" | "/auth/register" }
+  { prompt: string; label: string; to: "/auth" | "/auth/register" } | null
 > = {
   signin: { prompt: "New to Traka?", label: "Create an account", to: "/auth/register" },
   signup: { prompt: "Already on Traka?", label: "Sign in", to: "/auth" },
+  // Mid-onboarding step: no sign-in/register cross-link, the Skip action lives in the card.
+  whatsapp: null,
 };
 
 const BAND_HEADLINE: Record<AuthVariant, string> = {
   signin: "Market day, written down.",
   signup: "Cash and transfer, one book.",
+  whatsapp: "One more step, then you're in.",
 };
 
 /**
@@ -57,15 +60,17 @@ export function AuthShell({ variant, children }: AuthShellProps) {
             />
             Back to home
           </Link>
-          <Link
-            to={alt.to}
-            className="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground lg:hidden"
-          >
-            {alt.prompt}{" "}
-            <span className="font-semibold text-primary underline underline-offset-4">
-              {alt.label}
-            </span>
-          </Link>
+          {alt ? (
+            <Link
+              to={alt.to}
+              className="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground lg:hidden"
+            >
+              {alt.prompt}{" "}
+              <span className="font-semibold text-primary underline underline-offset-4">
+                {alt.label}
+              </span>
+            </Link>
+          ) : null}
           <Link
             to="/"
             className="group ml-auto hidden min-h-[44px] cursor-pointer items-center gap-1.5 px-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground lg:inline-flex"

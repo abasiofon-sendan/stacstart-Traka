@@ -19,7 +19,7 @@ function RegisterPage() {
       <RegisterForm
         onAuthenticate={() => {
           handleAuth();
-          navigate({ to: "/dashboard", replace: true });
+          navigate({ to: "/auth/whatsapp" });
         }}
       />
     </AuthShell>
