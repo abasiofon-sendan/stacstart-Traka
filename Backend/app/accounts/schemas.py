@@ -37,3 +37,15 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     virtual_account_number: Optional[str] = None
+
+class WhatsAppSetupResponse(BaseModel):
+    sandbox_number: str
+    join_code: str
+    join_message: str
+    wa_link: str
+    trial_note: str
+
+class WhatsAppStatusResponse(BaseModel):
+    linked: bool
+    sender: Optional[str] = None
+    last_seen: Optional[str] = None

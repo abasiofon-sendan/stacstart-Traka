@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.accounts import schemas, service
+from app.accounts import whatsapp as whatsapp_onboarding
 
 router = APIRouter(
     prefix="/accounts",
@@ -33,3 +34,23 @@ def get_me(
     Return the profile of the currently authenticated account holder.
     """
     return service.get_account(db=db, account_id=account_id)
+
+@router.get("/whatsapp-setup", response_model=schemas.WhatsAppSetupResponse)
+def whatsapp_setup():
+    """
+    Public join config for the Twilio WhatsApp sandbox: sandbox number,
+    join code and a tap-to-join wa.me link. No auth — the join code is
+    not a secret. Frontend shows this on the post-signup WhatsApp card.
+    """
+    return whatsapp_onboarding.setup_info()
+
+@router.get("/whatsapp-status", response_model=schemas.WhatsAppStatusResponse)
+def whatsapp_status(
+    db: Session = Depends(get_db),
+    account_id: str = Depends(service.get_current_account_id),
+):
+    """
+    Has this account's WhatsApp number messaged us yet? Frontend polls
+    this after showing the join card and flips to 'Connected' on true.
+    """
+    return whatsapp_onboarding.linkage_status(db=db, account_id=account_id)
