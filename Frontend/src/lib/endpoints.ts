@@ -5,7 +5,6 @@ import { api } from "./api";
 export interface AccountCreate {
   business_name: string;
   phone_number: string;
-  nin: string;
   pin: string;
 }
 
@@ -17,15 +16,17 @@ export interface AccountLogin {
 export interface TokenResponse {
   access_token: string;
   refresh_token: string;
-  virtual_account_number: string;
+  /** Null until a receiving-account provider provisions one. */
+  virtual_account_number: string | null;
 }
 
 export interface AccountResponse {
   id: string;
   business_name: string;
   phone_number: string;
-  virtual_account_number: string;
-  is_verified: boolean;
+  virtual_account_number: string | null;
+  access_token: string;
+  refresh_token: string;
 }
 
 export interface ProductResponse {
@@ -198,7 +199,8 @@ export interface AccountMeResponse {
   id: string;
   business_name: string;
   phone_number: string;
-  virtual_account_number: string;
+  /** Null until a receiving-account provider provisions one. */
+  virtual_account_number: string | null;
 }
 
 export interface WhatsAppSetupResponse {
@@ -217,7 +219,16 @@ export interface WhatsAppStatusResponse {
 
 export const accountsApi = {
   signup: (data: AccountCreate) =>
-    api.post<TokenResponse>("/accounts/signup", data).then((r) => r.data),
+    api
+      .post<TokenResponse>("/accounts/signup", {
+        ...data,
+        // Shim: the backend still declares `nin` as required and rejects
+        // duplicates. We no longer ask merchants for one, so send a stable
+        // placeholder derived from the (already unique) phone number. FastAPI
+        // ignores unknown fields, so this is a no-op once the backend drops it.
+        nin: `TRAKA-${data.phone_number}`,
+      })
+      .then((r) => r.data),
 
   login: (data: AccountLogin) =>
     api.post<TokenResponse>("/accounts/login", data).then((r) => r.data),

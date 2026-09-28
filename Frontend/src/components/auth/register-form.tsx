@@ -21,18 +21,13 @@ export function RegisterForm({ onAuthenticate }: RegisterFormProps) {
   const { toast } = useToast();
   const [businessName, setBusinessName] = useState("");
   const [phone, setPhone] = useState("");
-  const [nin, setNin] = useState("");
   const [pin, setPin] = useState("");
   const [terms, setTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const canSignup =
-    businessName.trim() &&
-    isValidLocalPhone(phone) &&
-    nin.length === 11 &&
-    pin.length === 6 &&
-    terms;
+    businessName.trim() && isValidLocalPhone(phone) && pin.length === 6 && terms;
 
   const handleSignup = async () => {
     if (!canSignup) {
@@ -51,7 +46,6 @@ export function RegisterForm({ onAuthenticate }: RegisterFormProps) {
       const res = await accountsApi.signup({
         business_name: businessName.trim(),
         phone_number: toStoredPhone(phone),
-        nin: nin.trim(),
         pin,
       });
       localStorage.setItem(
@@ -115,24 +109,6 @@ export function RegisterForm({ onAuthenticate }: RegisterFormProps) {
             value={phone}
             onValueChange={setPhone}
             autoComplete="tel"
-          />
-        </Field>
-
-        <Field
-          label="NIN"
-          htmlFor="register-nin"
-          required
-          helper="NIN required after signup — have your 11-digit number ready."
-        >
-          <Input
-            id="register-nin"
-            type="text"
-            inputMode="numeric"
-            placeholder="11-digit NIN"
-            maxLength={11}
-            value={nin}
-            onChange={(e) => setNin(e.target.value.replace(/\D/g, "").slice(0, 11))}
-            autoComplete="off"
           />
         </Field>
 
