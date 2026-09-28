@@ -5,6 +5,9 @@ const VOICE_MAP: Record<AiLanguage, string> = {
   pidgin: "Emma",
   yo: "Tayo",
   ha: "Umar",
+  // TODO: picks the English voice for now — swap in the real YarnGPT Swahili
+  // voice name once confirmed, otherwise replies read with English prosody.
+  sw: "Emma",
 };
 
 const YARNGPT_URL = "https://yarngpt.ai/api/v1/tts";

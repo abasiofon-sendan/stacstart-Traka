@@ -11,7 +11,7 @@ export const NAV_LINKS = [
   { label: "FAQ", href: "#faq" },
 ];
 
-export const LANGS = ["EN", "Pidgin", "Yoruba", "Hausa", "Igbo"] as const;
+export const LANGS = ["EN", "Pidgin", "Yoruba", "Hausa", "Swahili"] as const;
 export type Lang = (typeof LANGS)[number];
 
 export const VOICE_QUESTIONS: Record<Lang, string[]> = {
@@ -19,7 +19,7 @@ export const VOICE_QUESTIONS: Record<Lang, string[]> = {
   Pidgin: ["Who dey owe me?", "How much I don sell today?", "Who pay last?"],
   Yoruba: ["Tani o jẹ mi ni gbese?", "Elo ni mo ti ta loni?", "Tani o san gbẹhin?"],
   Hausa: ["Waye ke bin ni?", "Nawa na sayar yau?", "Waye ya biya a karshe?"],
-  Igbo: ["Onye ji m ụgwọ?", "Ego ole ka m ree taa?", "Onye kwụrụ ụgwọ ikpeazụ?"],
+  Swahili: ["Nani ananidai?", "Nimeuza kiasi gani leo?", "Nani alilipa mwisho?"],
 };
 
 export const VOICE_ANSWERS: Record<Lang, Record<string, string>> = {
@@ -43,10 +43,10 @@ export const VOICE_ANSWERS: Record<Lang, Record<string, string>> = {
     "Nawa na sayar yau?": "₦48,200 ya zuwa yanzu — ₦21,400 tsabar kudi, ₦26,800 ta canja wuri. Mafi kyawun lokaci 12pm.",
     "Waye ya biya a karshe?": "Aisha ta biya ₦6,000 da 4:12pm ta canja wuri. Ya daidaita da kansa.",
   },
-  Igbo: {
-    "Onye ji m ụgwọ?": "Chidi — ₦12,500 (achịcha 2, mmiri ara ehi 1). Aisha — ₦4,000. Ngụkọta ₦16,500.",
-    "Ego ole ka m ree taa?": "₦48,200 ruo ugbu a — ₦21,400 ego nkịtị, ₦26,800 nnyefe. Oge kacha mma bụ 12pm.",
-    "Onye kwụrụ ụgwọ ikpeazụ?": "Aisha kwụrụ ₦6,000 na 4:12pm site na nnyefe. O dakọtara onwe ya.",
+  Swahili: {
+    "Nani ananidai?": "Chidi — ₦12,500 (mkate 2, maziwa 1). Aisha — ₦4,000. Jumla ₦16,500 nje.",
+    "Nimeuza kiasi gani leo?": "₦48,200 hadi sasa — ₦21,400 pesa taslimu, ₦26,800 kwa uhamisho. Saa nzuri zaidi ilikuwa 12pm.",
+    "Nani alilipa mwisho?": "Aisha alilipa ₦6,000 kwa uhamisho saa 4:12pm. Imelingana yenyewe.",
   },
 };
 
@@ -70,7 +70,7 @@ export const FAQS: Faq[] = [
   },
   {
     q: "Which languages does the voice helper speak?",
-    a: "English, Pidgin, Yoruba, Hausa and Igbo. Type or hold the mic and ask about sales, debts or today’s close — it replies in your language, out loud.",
+    a: "English, Pidgin, Yoruba, Hausa and Swahili. Type or hold the mic and ask about sales, debts or today’s close — it replies in your language, out loud.",
   },
   {
     q: "Do I need a smartphone or POS?",

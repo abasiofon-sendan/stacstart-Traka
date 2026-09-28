@@ -18,6 +18,7 @@ const LANG_LABELS: Record<AiLanguage, string> = {
   yo: "Yoruba",
   ha: "Hausa",
   pidgin: "Pidgin",
+  sw: "Swahili",
 };
 
 function SettingsPage() {

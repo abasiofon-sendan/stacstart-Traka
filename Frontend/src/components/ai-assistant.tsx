@@ -46,6 +46,7 @@ const LANGUAGES: { code: AiLanguage; label: string }[] = [
   { code: "pidgin", label: "Pidgin" },
   { code: "yo", label: "Yoruba" },
   { code: "ha", label: "Hausa" },
+  { code: "sw", label: "Swahili" },
 ];
 
 export function AiAssistant({
@@ -299,7 +300,9 @@ function AssistantBody({
               <MagicWand weight="fill" className="mr-1.5 inline h-3.5 w-3.5 text-primary" />
               {aiLang === "pidgin"
                 ? "Ahn-ahn! I dey track your live data sharply. Drop your question like \"Who dey owe me?\" or \"Who clear debt last?\"."
-                : "Hello! I scan your live business data instantly. Ask me something like \"Who is owing me?\" or \"Who paid last?\"."}
+                : aiLang === "sw"
+                  ? "Habari! Ninafuatilia data yako moja kwa moja. Uliza kama \"Nani ananidai?\" au \"Nani alilipa mwisho?\"."
+                  : "Hello! I scan your live business data instantly. Ask me something like \"Who is owing me?\" or \"Who paid last?\"."}
             </div>
           )}
         </div>

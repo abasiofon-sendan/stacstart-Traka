@@ -10,6 +10,7 @@ const AI_CHIPS: Record<AiLanguage, string[]> = {
   yo: ["Ta l'o je mi?", "Elo ni ere mi loni?", "Akojopo oja"],
   ha: ["Wane ne yake bina?", "Nawa riba a yau?", "Takaitaccen kaya"],
   pidgin: ["Who dey owe me?", "How much profit I make today?", "Inventory wey remain"],
+  sw: ["Nani ananidai?", "Faida ya leo ni kiasi gani?", "Muhtasari wa stock"],
 };
 
 interface AiState {
@@ -88,7 +89,7 @@ export const useAiStore = create<AiState>()((set, get) => ({
       const res = await voiceApi.askVoice(audio, context);
       set((s) => ({ chatLogs: [...s.chatLogs, `bot:${res.reply}`] }));
       const detected = res.language_detected as AiLanguage;
-      if (["en", "yo", "ha", "pidgin"].includes(detected)) {
+      if (["en", "yo", "ha", "pidgin", "sw"].includes(detected)) {
         set({ aiLang: detected });
       }
     } catch (err) {

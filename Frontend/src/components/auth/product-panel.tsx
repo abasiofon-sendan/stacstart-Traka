@@ -128,7 +128,7 @@ function DayCloseCard() {
   );
 }
 
-const LANG_TAGS = ["EN", "Pidgin", "Yoruba", "Hausa", "Igbo"];
+const LANG_TAGS = ["EN", "Pidgin", "Yoruba", "Hausa", "Swahili"];
 
 /** Register feature card: voice helper chat in the trader's language. */
 function VoiceCard() {

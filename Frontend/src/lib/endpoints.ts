@@ -341,7 +341,7 @@ export const reportsApi = {
 
 /* ─── Voice / AI Advisor ─── */
 
-export type AiLanguage = "en" | "yo" | "ha" | "pidgin";
+export type AiLanguage = "en" | "yo" | "ha" | "pidgin" | "sw";
 
 export interface AdvisorResponse {
   transcript: string;
