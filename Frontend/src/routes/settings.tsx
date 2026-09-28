@@ -21,7 +21,7 @@ const LANG_LABELS: Record<AiLanguage, string> = {
 };
 
 function SettingsPage() {
-  const { accountName, accountNumber, bankName } = useAccount();
+  const { accountName, accountNumber, hasReceivingAccount } = useAccount();
   const aiLang = useAiStore((s) => s.aiLang);
   const logout = useAuthStore((s) => s.logout);
   const { data: me } = useMe();
@@ -68,7 +68,9 @@ function SettingsPage() {
               <p className="truncate font-display text-lg font-extrabold text-foreground">
                 {accountName || "Merchant"}
               </p>
-              <p className="truncate font-mono text-sm text-muted-foreground">{accountNumber}</p>
+              <p className="truncate font-mono text-sm text-muted-foreground">
+                {hasReceivingAccount ? accountNumber : "No receiving account yet"}
+              </p>
             </div>
           </div>
           <dl className="mt-5 space-y-3 border-t border-border pt-4 text-sm">
@@ -82,9 +84,11 @@ function SettingsPage() {
             <div className="flex items-center justify-between gap-3">
               <dt className="flex items-center gap-2 text-muted-foreground">
                 <Bank className="h-4 w-4" />
-                Receiving bank
+                Receiving account
               </dt>
-              <dd className="truncate font-medium text-foreground">{bankName}</dd>
+              <dd className="truncate font-medium text-foreground">
+                {hasReceivingAccount ? "Reserved" : "Simulated"}
+              </dd>
             </div>
             <div className="flex items-center justify-between gap-3">
               <dt className="text-muted-foreground">Currency</dt>

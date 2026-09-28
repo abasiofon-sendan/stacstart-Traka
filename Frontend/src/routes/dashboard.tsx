@@ -10,7 +10,7 @@ function DashboardPage() {
   const dashboardLoading = useSessionStore((s) => s.loading.dashboard);
   const { revenue, profit, totalDebt, unpaidDebtorCount, lowStockCount } = useDashboardStats();
   const inventory = useInventoryStore((s) => s.items);
-  const { accountName, accountNumber } = useAccount();
+  const { accountName, accountNumber, hasReceivingAccount } = useAccount();
   const openIncomingTransfer = useUiStore((s) => s.openIncomingTransfer);
   const setActiveModal = useUiStore((s) => s.setActiveModal);
   const addStagedProduct = useScanStore((s) => s.addStagedProduct);
@@ -27,6 +27,7 @@ function DashboardPage() {
       inventory={inventory}
       accountName={accountName}
       accountNumber={accountNumber}
+      hasReceivingAccount={hasReceivingAccount}
       onSimulateTransfer={openIncomingTransfer}
       onOpenCashModal={() => setActiveModal("manual-cash")}
       onNavigateInventory={() => navigate({ to: "/inventory" })}

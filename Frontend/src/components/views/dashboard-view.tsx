@@ -25,6 +25,7 @@ interface DashboardViewProps {
   inventory: InventoryItem[];
   accountName: string;
   accountNumber: string;
+  hasReceivingAccount: boolean;
   onSimulateTransfer: () => void;
   onOpenCashModal: () => void;
   onNavigateInventory: () => void;
@@ -41,6 +42,7 @@ export function DashboardView({
   inventory,
   accountName,
   accountNumber,
+  hasReceivingAccount,
   onSimulateTransfer,
   onOpenCashModal,
   onNavigateInventory,
@@ -50,6 +52,7 @@ export function DashboardView({
   const [copied, setCopied] = useState(false);
 
   const copyNumber = () => {
+    if (!accountNumber) return;
     navigator.clipboard.writeText(accountNumber).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -70,16 +73,36 @@ export function DashboardView({
               </p>
               <h4 className="text-xs font-extrabold text-primary-foreground">{accountName}</h4>
             </div>
-            <span className="text-[9px] bg-white/20 text-primary-foreground font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
-              Wema ALAT
+            <span
+              title={
+                hasReceivingAccount
+                  ? "Reserved account from your payout provider"
+                  : "No live payout account yet — this is the shop's phone line"
+              }
+              className={cn(
+                "text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0",
+                hasReceivingAccount
+                  ? "bg-white/20 text-primary-foreground"
+                  : "bg-white text-foreground",
+              )}
+            >
+              {hasReceivingAccount ? "Live" : "Simulated"}
             </span>
           </div>
           <div className="flex justify-between items-center mt-4">
-            <h2 className="font-mono text-2xl font-bold tracking-widest">{accountNumber}</h2>
+            {hasReceivingAccount ? (
+              <h2 className="font-mono text-2xl font-bold tracking-widest">{accountNumber}</h2>
+            ) : (
+              <p className="text-sm text-primary-foreground/90">
+                No live receiving account yet.
+              </p>
+            )}
             <Button
               variant="ghost"
               size="icon"
               onClick={copyNumber}
+              disabled={!accountNumber}
+              aria-label="Copy account number"
               className="bg-white/20 hover:bg-white/30 text-primary-foreground rounded-sm"
             >
               {copied ? <Check weight="bold" className="h-4 w-4" /> : <Copy weight="bold" className="h-4 w-4" />}

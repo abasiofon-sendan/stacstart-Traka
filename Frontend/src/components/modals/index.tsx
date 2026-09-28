@@ -24,7 +24,7 @@ export function Modals() {
   const incomingTransferAmount = useUiStore((s) => s.incomingTransferAmount);
   const incomingTransferSender = useUiStore((s) => s.incomingTransferSender);
   const incomingTransferBank = useUiStore((s) => s.incomingTransferBank);
-  const { accountName, accountNumber, bankName } = useAccount();
+  const { accountName, accountNumber, hasReceivingAccount } = useAccount();
 
   return (
     <>
@@ -61,7 +61,7 @@ export function Modals() {
         open={activeModal === "collect-debt"}
         onClose={closeModal}
         target={collectTarget}
-        bankName={bankName}
+        hasReceivingAccount={hasReceivingAccount}
         accountNumber={accountNumber}
         accountName={accountName}
         onRemind={(title, message) => notify(title, message)}

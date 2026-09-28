@@ -36,13 +36,14 @@ export const useSessionStore = create<SessionState>()((set) => ({
 export function useAccount(): {
   accountName: string;
   accountNumber: string;
-  bankName: string;
+  /** True once a receiving-account provider has provisioned a real number. */
+  hasReceivingAccount: boolean;
 } {
   const me = useSessionStore((s) => s.me);
   return {
     accountName: me?.business_name ?? "",
     accountNumber: me?.virtual_account_number ?? "",
-    bankName: "Wema Bank",
+    hasReceivingAccount: !!me?.virtual_account_number,
   };
 }
 

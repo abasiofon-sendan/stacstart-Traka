@@ -12,7 +12,8 @@ interface CollectDebtDrawerProps {
   open: boolean;
   onClose: () => void;
   target: DebtorEntry | null;
-  bankName: string;
+  /** False until a payout provider provisions a real reserved account. */
+  hasReceivingAccount: boolean;
   accountNumber: string;
   accountName: string;
   onRemind?: (title: string, message: string) => void;
@@ -22,7 +23,7 @@ export function CollectDebtDrawer({
   open,
   onClose,
   target,
-  bankName,
+  hasReceivingAccount,
   accountNumber,
   accountName,
   onRemind,
@@ -139,11 +140,11 @@ export function CollectDebtDrawer({
               </p>
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5">
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-primary/70">
-                  {bankName}
+                  {hasReceivingAccount ? "Reserved account" : "Demo account"}
                 </p>
                 <div className="mt-1 flex items-center justify-between">
                   <p className="text-lg font-black tracking-widest text-foreground">
-                    {accountNumber}
+                    {accountNumber || "Not set"}
                   </p>
                   <Button
                     type="button"
