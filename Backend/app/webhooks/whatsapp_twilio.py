@@ -307,8 +307,26 @@ def process_message(form: dict) -> str:
         account = find_account(db, sender)
         logger.info("whatsapp inbound sender=%s account=%s has_media=%s body=%.80s",
                     sender_key, account.id if account else None, num_media, body)
+        # Track every sender for onboarding "Connected" detection (never fails).
+        try:
+            from app.accounts import whatsapp as whatsapp_onboarding
+            whatsapp_onboarding.record_sender(
+                db, sender, account.id if account else None)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("whatsapp link record failed: %s", exc)
         if not account:
-            return "No Traka shop linked to this WhatsApp number yet. Abeg register that number in the Traka app first, then send your voice note again."
+            try:
+                setup = whatsapp_onboarding.setup_info()
+                join_help = (
+                    f" First, join our WhatsApp line: send '{setup['join_message']}' "
+                    f"to {setup['sandbox_number']}."
+                    if setup.get("join_message") else ""
+                )
+            except Exception:  # noqa: BLE001
+                join_help = ""
+            return ("No Traka shop linked to this WhatsApp number yet. Abeg sign up "
+                    "in the Traka app with THIS same number, then send your message again."
+                    + join_help)
 
         transcript = ""
         text = body
