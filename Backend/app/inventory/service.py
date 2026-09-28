@@ -90,58 +90,110 @@ def delete_product(db: Session, product_id: str, account_id: str):
 
     return {"message": "Product deleted successfully"}
 
-_SINGLE_PROMPT = (
-    "You are a Nigerian FMCG product identifier. "
-    "Look at this single product image carefully. "
-    "Return ONLY the full commercial product name including brand, variant, and size. "
-    "Examples: 'Peak Full Cream Milk Tin (400g)', 'Indomie Instant Noodles Chicken (70g)', "
-    "'Dangote Sugar (1kg)', 'Cowbell Chocolate Sachet (28g)'. "
-    "If you cannot clearly identify the product, return exactly: UNREADABLE"
+_BATCH_PROMPT = (
+    "You are a Nigerian FMCG product identifier. You are given {n} product photos in order. "
+    "Return ONLY a JSON array with exactly {n} items: the full commercial product name for each "
+    "photo including brand, variant, and size (e.g. 'Peak Full Cream Milk Tin (400g)', "
+    "'Indomie Instant Noodles Chicken (70g)'), in the same order as the photos. "
+    "If a photo is unreadable, use null for that position. No prose, no code fences."
 )
 
 _GEMINI_MODEL = os.getenv("GEMINI_VISION_MODEL", "gemini-3.8-flash")
-# Fallbacks when the primary model is overloaded (503) or retired (404).
+# Fallbacks only for retired models (404). Overload (503) fails fast so a
+# 3-image batch never stacks 4 slow attempts — the client should retry.
 _GEMINI_FALLBACKS = (
     "gemini-3.7-flash",
     "gemini-3.6-flash",
     "gemini-flash-latest",
 )
 
+_MAX_DIM = 1024  # downscale phone photos before upload: faster + cheaper
 
-def _extract_single(img_bytes: bytes, mime_type: str):
-    """One Gemini call for one image. Returns product name string or None.
 
-    Tries the primary model then fallbacks. Google API outages surface as
-    HTTPException(502/503) with Google's message — never an opaque 500.
-    """
+def _downscale(img_bytes: bytes, mime_type: str) -> tuple[bytes, str]:
+    """Shrink large photos (max 1024px, JPEG-80). Passes through untouched
+    when Pillow is unavailable or the bytes aren't a decodable image."""
+    try:
+        import io
+
+        from PIL import Image
+    except ImportError:
+        return img_bytes, mime_type
+    try:
+        im = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        im.thumbnail((_MAX_DIM, _MAX_DIM))
+        buf = io.BytesIO()
+        im.save(buf, "JPEG", quality=80)
+        return buf.getvalue(), "image/jpeg"
+    except Exception:
+        return img_bytes, mime_type
+
+
+def _parse_batch_json(content: str, n: int) -> list:
+    """Tolerantly parse the model's JSON array (fences/prose around it OK)."""
+    import json
+    import re
+
+    text = (content or "").strip()
+    fence = re.search(r"```(?:json)?\s*(.*?)```", text, re.DOTALL | re.IGNORECASE)
+    if fence:
+        text = fence.group(1).strip()
+    if not text.startswith("["):
+        start, end = text.find("["), text.rfind("]")
+        if start != -1 and end > start:
+            text = text[start:end + 1]
+    data = json.loads(text)
+    if not isinstance(data, list):
+        raise ValueError("expected a JSON array")
+    return (data + [None] * n)[:n]
+
+
+def _extract_batch(items: list[tuple[bytes, str]]) -> list:
+    """One Gemini call for all images. Returns list of names/nulls in order."""
     from google.genai import errors as genai_errors
 
+    n = len(items)
+    contents: list = [_BATCH_PROMPT.format(n=n)]
+    contents += [
+        types.Part.from_bytes(data=img_bytes, mime_type=mime)
+        for img_bytes, mime in items
+    ]
     last_err: Exception | None = None
+    retried_overload = False
     for model in (_GEMINI_MODEL, *_GEMINI_FALLBACKS):
         try:
-            response = client.models.generate_content(
-                model=model,
-                contents=[
-                    _SINGLE_PROMPT,
-                    types.Part.from_bytes(data=img_bytes, mime_type=mime_type)
-                ]
-            )
-            break
+            response = client.models.generate_content(model=model, contents=contents)
+            return _parse_batch_json(response.text, n)
         except genai_errors.APIError as exc:
             last_err = exc
-            if exc.code in (404, 503):
-                continue  # retired or overloaded — try next model
+            if exc.code == 404:
+                continue  # retired model — try next
+            if exc.code == 503 and not retried_overload:
+                retried_overload = True
+                continue  # transient overload — one retry on next model, then give up
+            if exc.code == 503:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Product recognition is busy right now, abeg try again in a minute.",
+                )
             raise HTTPException(
                 status_code=502,
                 detail=f"Product recognition failed ({exc.code}): {exc.message}",
             )
-    else:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Product recognition is temporarily overloaded: {last_err}",
-        )
-    result = (response.text or "").strip()
-    return None if (not result or result.upper() == "UNREADABLE") else result
+        except (ValueError, AttributeError) as exc:
+            last_err = exc
+            break  # unparseable output — retrying another model won't help
+    raise HTTPException(
+        status_code=503,
+        detail=f"Product recognition is temporarily unavailable: {last_err}",
+    )
+
+
+def _extract_single(img_bytes: bytes, mime_type: str):
+    """Single-image convenience wrapper around the batch call."""
+    names = _extract_batch([(img_bytes, mime_type)])
+    name = names[0] if names else None
+    return name if isinstance(name, str) and name.strip() else None
 
 
 def extract_product_from_images(
@@ -149,7 +201,7 @@ def extract_product_from_images(
     mime_types: List[str] = None,
 ) -> List[dict]:
     """
-    One Gemini call per image — each image is identified independently.
+    One batched Gemini call for all images (fast: single round trip).
     Returns a list of { index, name } dicts, one per identified product.
     """
     if not image_bytes_list:
@@ -158,11 +210,17 @@ def extract_product_from_images(
     if not mime_types:
         mime_types = ["image/jpeg"] * len(image_bytes_list)
 
+    items = [
+        _downscale(img_bytes, mime)
+        for img_bytes, mime in zip(image_bytes_list, mime_types)
+    ]
+    raw_names = _extract_batch(items)
+
     results = []
-    for i, (img_bytes, mime) in enumerate(zip(image_bytes_list, mime_types)):
-        name = _extract_single(img_bytes, mime)
-        if name:
-            results.append({"index": i, "name": name})
+    for i, name in enumerate(raw_names):
+        if (isinstance(name, str) and name.strip()
+                and name.strip().upper() != "UNREADABLE"):
+            results.append({"index": i, "name": name.strip()})
 
     if not results:
         raise HTTPException(
