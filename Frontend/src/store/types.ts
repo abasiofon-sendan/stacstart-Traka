@@ -1,11 +1,20 @@
+import type { CurrencyCode } from "@/lib/countries";
+
 export type TabId = "dashboard" | "inventory" | "debtors";
 
 export interface InventoryItem {
   id: string;
   name: string;
   qty: number;
+  /** Major units, as the API sends them. */
   cost: number;
+  /** Major units, as the API sends them. */
   selling: number;
+  /** Currency this record belongs to. */
+  currency: CurrencyCode;
+  /** Whole minor units — the canonical stored amount. */
+  costMinor: number;
+  sellingMinor: number;
 }
 
 export interface DebtorItem {
@@ -17,9 +26,14 @@ export interface DebtorItem {
 export interface DebtorEntry {
   id: string;
   name: string;
+  /** Major units, as the API sends them. */
   amount: number;
   date: string;
   items: DebtorItem[];
+  /** Currency this record belongs to. */
+  currency: CurrencyCode;
+  /** Whole minor units — the canonical stored amount. */
+  amountMinor: number;
 }
 
 /** Transient basket item used in the Log Credit Sale form. */

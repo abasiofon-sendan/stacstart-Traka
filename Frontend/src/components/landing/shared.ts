@@ -1,3 +1,6 @@
+import { money } from "@/lib/money";
+import { activeCountry } from "@/store/country-store";
+
 export const ease: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 export function focusRing() {
@@ -22,33 +25,46 @@ export const VOICE_QUESTIONS: Record<Lang, string[]> = {
   Swahili: ["Nani ananidai?", "Nimeuza kiasi gani leo?", "Nani alilipa mwisho?"],
 };
 
-export const VOICE_ANSWERS: Record<Lang, Record<string, string>> = {
-  EN: {
-    "Who owes me?": "Chidi — ₦12,500 (2 bread, 1 milk). Aisha — ₦4,000. Total ₦16,500 out.",
-    "How much did I sell today?": "₦48,200 so far — ₦21,400 cash, ₦26,800 by transfer. Best hour was 12pm.",
-    "Who paid last?": "Aisha cleared ₦6,000 by transfer at 4:12pm. It matched itself.",
-  },
-  Pidgin: {
-    "Who dey owe me?": "Chidi — ₦12,500 (2 bread, 1 milk). Aisha — ₦4,000. Total ₦16,500 out.",
-    "How much I don sell today?": "₦48,200 so far — ₦21,400 cash, ₦26,800 by transfer. Best hour na 12pm.",
-    "Who pay last?": "Aisha clear ₦6,000 by transfer for 4:12pm. E match itself.",
-  },
-  Yoruba: {
-    "Tani o jẹ mi ni gbese?": "Chidi — ₦12,500 (búrẹ́dì 2, wàrà 1). Aisha — ₦4,000. Lapapọ ₦16,500.",
-    "Elo ni mo ti ta loni?": "₦48,200 titi di bayi — ₦21,400 owó ọwọ́, ₦26,800 ìfowópamọ́. Wákàtí tó dára jùlọ ni 12pm.",
-    "Tani o san gbẹhin?": "Aisha san ₦6,000 ní 4:12pm nípasẹ̀ ìfowópamọ́. Ó bá ara rẹ̀ mu.",
-  },
-  Hausa: {
-    "Waye ke bin ni?": "Chidi — ₦12,500 (burodi 2, madara 1). Aisha — ₦4,000. Jimilla ₦16,500.",
-    "Nawa na sayar yau?": "₦48,200 ya zuwa yanzu — ₦21,400 tsabar kudi, ₦26,800 ta canja wuri. Mafi kyawun lokaci 12pm.",
-    "Waye ya biya a karshe?": "Aisha ta biya ₦6,000 da 4:12pm ta canja wuri. Ya daidaita da kansa.",
-  },
-  Swahili: {
-    "Nani ananidai?": "Chidi — ₦12,500 (mkate 2, maziwa 1). Aisha — ₦4,000. Jumla ₦16,500 nje.",
-    "Nimeuza kiasi gani leo?": "₦48,200 hadi sasa — ₦21,400 pesa taslimu, ₦26,800 kwa uhamisho. Saa nzuri zaidi ilikuwa 12pm.",
-    "Nani alilipa mwisho?": "Aisha alilipa ₦6,000 kwa uhamisho saa 4:12pm. Imelingana yenyewe.",
-  },
-};
+/**
+ * Spoken answers in the demo. Built from the active country's config so the
+ * numbers, the currency and the customer names all match what a merchant in
+ * that market would actually see.
+ */
+export function voiceAnswers(): Record<Lang, Record<string, string>> {
+  const c = activeCountry();
+  const { copy, payment } = c;
+  const a = copy.customerA;
+  const b = copy.customerB;
+  const m = (v: number) => money(v);
+  const d = copy.demo;
+  return {
+    EN: {
+      "Who owes me?": `${a} — ${m(d.debtorOne)} (2 bread, 1 milk). ${b} — ${m(d.debtorTwo)}. Total ${m(d.debtorTotal)} out.`,
+      "How much did I sell today?": `${m(d.dayTotal)} so far — ${m(d.dayCash)} cash, ${m(d.dayTransfer)} by ${payment.label.toLowerCase()}. Best hour was 12pm.`,
+      "Who paid last?": `${b} cleared ${m(d.lastPayment)} by ${payment.label.toLowerCase()} at 4:12pm. It matched itself.`,
+    },
+    Pidgin: {
+      "Who dey owe me?": `${a} — ${m(d.debtorOne)} (2 bread, 1 milk). ${b} — ${m(d.debtorTwo)}. Total ${m(d.debtorTotal)} out.`,
+      "How much I don sell today?": `${m(d.dayTotal)} so far — ${m(d.dayCash)} cash, ${m(d.dayTransfer)} by ${payment.label.toLowerCase()}. Best hour na 12pm.`,
+      "Who pay last?": `${b} clear ${m(d.lastPayment)} by ${payment.label.toLowerCase()} for 4:12pm. E match itself.`,
+    },
+    Yoruba: {
+      "Tani o jẹ mi ni gbese?": `${a} — ${m(d.debtorOne)} (búrẹ́dì 2, wàrà 1). ${b} — ${m(d.debtorTwo)}. Lapapọ ${m(d.debtorTotal)}.`,
+      "Elo ni mo ti ta loni?": `${m(d.dayTotal)} titi di bayi — ${m(d.dayCash)} owó ọwọ́, ${m(d.dayTransfer)} ${payment.label.toLowerCase()}. Wákàtí tó dára jùlọ ni 12pm.`,
+      "Tani o san gbẹhin?": `${b} san ${m(d.lastPayment)} ní 4:12pm nípasẹ̀ ${payment.label.toLowerCase()}. Ó bá ara rẹ̀ mu.`,
+    },
+    Hausa: {
+      "Waye ke bin ni?": `${a} — ${m(d.debtorOne)} (burodi 2, madara 1). ${b} — ${m(d.debtorTwo)}. Jimilla ${m(d.debtorTotal)}.`,
+      "Nawa na sayar yau?": `${m(d.dayTotal)} ya zuwa yanzu — ${m(d.dayCash)} tsabar kudi, ${m(d.dayTransfer)} ta ${payment.label.toLowerCase()}. Mafi kyawun lokaci 12pm.`,
+      "Waye ya biya a karshe?": `${b} ta biya ${m(d.lastPayment)} da 4:12pm ta ${payment.label.toLowerCase()}. Ya daidaita da kansa.`,
+    },
+    Swahili: {
+      "Nani ananidai?": `${a} — ${m(d.debtorOne)} (mkate 2, maziwa 1). ${b} — ${m(d.debtorTwo)}. Jumla ${m(d.debtorTotal)} nje.`,
+      "Nimeuza kiasi gani leo?": `${m(d.dayTotal)} hadi sasa — ${m(d.dayCash)} pesa taslimu, ${m(d.dayTransfer)} kwa ${payment.label.toLowerCase()}. Saa nzuri zaidi ilikuwa 12pm.`,
+      "Nani alilipa mwisho?": `${b} alilipa ${m(d.lastPayment)} kwa ${payment.label.toLowerCase()} saa 4:12pm. Imelingana yenyewe.`,
+    },
+  };
+}
 
 export interface Faq {
   q: string;

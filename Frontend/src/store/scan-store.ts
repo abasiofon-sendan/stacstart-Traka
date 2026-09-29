@@ -3,6 +3,8 @@ import type { StagedProduct } from "./types";
 import { inventoryApi } from "@/lib/endpoints";
 import { notify } from "./notify";
 import { useInventoryStore } from "./inventory-store";
+import { toMoney } from "@/lib/money";
+import { activeCountry } from "@/store/country-store";
 
 interface ScanState {
   stagedProducts: StagedProduct[];
@@ -114,6 +116,9 @@ export const useScanStore = create<ScanState>()((set, get) => ({
         qty: s.qty,
         cost: s.cost,
         selling: s.selling,
+        currency: activeCountry().currency.code,
+        costMinor: toMoney(s.cost, activeCountry().currency.code).minor,
+        sellingMinor: toMoney(s.selling, activeCountry().currency.code).minor,
       })),
     );
     notify(

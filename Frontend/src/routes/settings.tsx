@@ -10,7 +10,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAccount } from "@/store/session-store";
 import { useAiStore } from "@/store/ai-store";
 import { useAuthStore } from "@/store/auth-store";
+import { useCountryStore } from "@/store/country-store";
+import { getCountry } from "@/lib/countries";
 import type { AiLanguage } from "@/lib/endpoints";
+import { PENDING_LANGUAGES } from "@/lib/endpoints";
 import { useMe } from "@/lib/query-hooks";
 
 const LANG_LABELS: Record<AiLanguage, string> = {
@@ -26,6 +29,7 @@ function SettingsPage() {
   const aiLang = useAiStore((s) => s.aiLang);
   const logout = useAuthStore((s) => s.logout);
   const { data: me } = useMe();
+  const country = getCountry(useCountryStore((s) => s.code));
   const [pushEnabled, setPushEnabled] = useState(true);
   const [voiceReplies, setVoiceReplies] = useState(false);
 
@@ -92,8 +96,20 @@ function SettingsPage() {
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted-foreground">Country</dt>
+              <dd className="font-medium text-foreground">
+                {country.flag} {country.name}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
               <dt className="text-muted-foreground">Currency</dt>
-              <dd className="font-medium text-foreground">Nigerian Naira (₦)</dd>
+              <dd className="font-medium text-foreground">
+                {country.currency.name} ({country.currency.symbol})
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <dt className="text-muted-foreground">Payment method</dt>
+              <dd className="font-medium text-foreground">{country.payment.label}</dd>
             </div>
           </dl>
         </section>
@@ -141,7 +157,14 @@ function SettingsPage() {
           </ul>
           <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-4 text-sm">
             <span className="text-muted-foreground">Assistant language</span>
-            <span className="font-medium text-foreground">{langLabel}</span>
+            <span className="font-medium text-foreground">
+              {langLabel}
+              {PENDING_LANGUAGES.includes(aiLang) && (
+                <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                  coming soon
+                </span>
+              )}
+            </span>
           </div>
         </section>
 

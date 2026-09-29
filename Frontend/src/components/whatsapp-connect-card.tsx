@@ -11,6 +11,12 @@ interface WhatsAppConnectCardProps {
   onSkip?: () => void;
   /** Poll /whatsapp-status while the card is on screen. */
   poll?: boolean;
+  /**
+   * Chromeless inline flow for the post-signup page: no card, no steps, few
+   * words. Buttons stack full-width — side-by-side they overflow narrow
+   * columns because the base Button is shrink-0 + whitespace-nowrap.
+   */
+  bare?: boolean;
   className?: string;
 }
 
@@ -22,6 +28,7 @@ interface WhatsAppConnectCardProps {
 export function WhatsAppConnectCard({
   onSkip,
   poll = true,
+  bare = false,
   className,
 }: WhatsAppConnectCardProps) {
   const { data: setup, isLoading: setupLoading, error: setupError } =
@@ -43,6 +50,109 @@ export function WhatsAppConnectCard({
       // Clipboard is blocked (insecure origin, permissions) — the join
       // message is on screen anyway, so leave the button quietly inert.
     }
+  }
+
+  const actions = (
+    <>
+      <div className={cn("mt-5 flex gap-2", bare ? "flex-col" : "flex-col sm:flex-row sm:items-center")}>
+        {setupLoading ? (
+          <Button className={bare ? "w-full" : "w-full sm:w-auto"} disabled>
+            Preparing WhatsApp…
+          </Button>
+        ) : setup?.wa_link ? (
+          // Real anchor, not window.open: Brave Shields and popup blockers
+          // can swallow window.open whole, leaving a dead click with zero
+          // feedback. A link click is never popup-blocked, and it degrades
+          // gracefully (long-press to copy, open in another app).
+          <Button asChild className={bare ? "w-full" : "w-full sm:w-auto"}>
+            <a href={setup.wa_link} target="_blank" rel="noreferrer">
+              <WhatsappLogo weight="bold" />
+              Continue on WhatsApp
+              <ArrowSquareOut className="size-4" />
+            </a>
+          </Button>
+        ) : (
+          // No wa_link came back from setup: render disabled rather than a
+          // button that silently does nothing when tapped.
+          <Button
+            className={bare ? "w-full" : "w-full sm:w-auto"}
+            disabled
+            title="WhatsApp link unavailable — check your connection and retry"
+          >
+            <WhatsappLogo weight="bold" />
+            Continue on WhatsApp
+            <ArrowSquareOut className="size-4" />
+          </Button>
+        )}
+        <Button
+          variant="secondary"
+          className={bare ? "w-full" : "w-full sm:w-auto"}
+          onClick={copyJoinMessage}
+          disabled={!setup?.join_message}
+        >
+          <Copy className="size-4" />
+          {copied ? "Copied" : "Copy join message"}
+        </Button>
+      </div>
+
+      {setup?.trial_note ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {setup.trial_note}
+        </p>
+      ) : null}
+
+      {poll ? (
+        <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="size-1.5 animate-pulse rounded-full bg-primary" />
+          {POLL_HINT}
+        </p>
+      ) : null}
+    </>
+  );
+
+  const skip = onSkip ? (
+    <Button
+      variant="ghost"
+      className="mt-5 w-full"
+      onClick={onSkip}
+    >
+      {linked ? "Continue to Traka" : "Skip for now"}
+    </Button>
+  ) : null;
+
+  if (bare) {
+    if (linked) {
+      return (
+        <div className={className}>
+          <p className="flex items-start gap-2 text-sm text-foreground">
+            <CheckCircle weight="fill" className="mt-0.5 size-5 shrink-0 text-primary" />
+            <span>
+              WhatsApp connected{sender ? <> to <span className="font-mono">{sender}</span></> : null}.
+              Send a message to log your first debt.
+            </span>
+          </p>
+          {skip}
+        </div>
+      );
+    }
+    return (
+      <div className={className}>
+        <p className="text-sm text-muted-foreground">
+          Log debts by chatting. Tap below, send the join message once, then
+          just talk.
+        </p>
+        {notConfigured ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            {setupError
+              ? `WhatsApp setup is unavailable right now (${getErrorMessage(setupError)}).`
+              : "WhatsApp is not configured on the server yet."}
+          </p>
+        ) : (
+          actions
+        )}
+        {skip}
+      </div>
+    );
   }
 
   return (
@@ -114,61 +224,12 @@ export function WhatsAppConnectCard({
                 : "WhatsApp is not configured on the server yet."}
             </p>
           ) : (
-            <>
-              <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
-                {setupLoading ? (
-                  <Button className="w-full sm:w-auto" disabled>
-                    Preparing WhatsApp…
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full sm:w-auto"
-                    onClick={() => {
-                      if (setup?.wa_link) window.open(setup.wa_link, "_blank");
-                    }}
-                  >
-                    <WhatsappLogo weight="bold" />
-                    Continue on WhatsApp
-                    <ArrowSquareOut className="size-4" />
-                  </Button>
-                )}
-                <Button
-                  variant="secondary"
-                  className="w-full sm:w-auto"
-                  onClick={copyJoinMessage}
-                  disabled={!setup?.join_message}
-                >
-                  <Copy className="size-4" />
-                  {copied ? "Copied" : "Copy join message"}
-                </Button>
-              </div>
-
-              {setup?.trial_note ? (
-                <p className="mt-3 text-xs text-muted-foreground">
-                  {setup.trial_note}
-                </p>
-              ) : null}
-
-              {poll ? (
-                <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="size-1.5 animate-pulse rounded-full bg-primary" />
-                  {POLL_HINT}
-                </p>
-              ) : null}
-            </>
+            actions
           )}
         </>
       )}
 
-      {onSkip ? (
-        <Button
-          variant="ghost"
-          className="mt-5 w-full"
-          onClick={onSkip}
-        >
-          {linked ? "Continue to Traka" : "Skip for now"}
-        </Button>
-      ) : null}
+      {skip}
     </section>
   );
 }

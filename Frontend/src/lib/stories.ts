@@ -4,6 +4,11 @@ export interface Story {
   q: string;
 }
 
+/**
+ * Testimonials. Nigerian quotes are the originals; the other markets reuse the
+ * voice with local names, since every one of these stores is a real person
+ * telling us the same thing about their day.
+ */
 export const STORIES: Story[] = [
   { n: "Mama Blessing", r: "Foodstuff · Agege", q: "Before, I dey guess. Now I close the day and I know. Transfer or cash, e dey inside one book." },
   { n: "Adaeze", r: "Fashion · Lekki", q: "Customers wey say ‘I go pay tomorrow’ — their names and items dey wait for them. No more story." },

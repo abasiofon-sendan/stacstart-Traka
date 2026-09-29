@@ -61,7 +61,7 @@ function WhatsAppOnboardingPage() {
         </p>
       </div>
 
-      <WhatsAppConnectCard onSkip={() => navigate({ to: "/dashboard" })} />
+      <WhatsAppConnectCard bare onSkip={() => navigate({ to: "/dashboard" })} />
     </AuthShell>
   );
 }

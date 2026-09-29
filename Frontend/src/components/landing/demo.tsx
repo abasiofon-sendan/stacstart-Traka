@@ -3,9 +3,13 @@ import { AnimatePresence, motion, useReducedMotion, useScroll, useSpring } from 
 import { Bank, Check, CurrencyNgn, SpeakerHigh } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ease, VOICE_ANSWERS, VOICE_QUESTIONS } from "./shared";
+import { ease, voiceAnswers, VOICE_QUESTIONS } from "./shared";
+import { money } from "@/lib/money";
+import { activeCountry } from "@/store/country-store";
 
 export function LandingDemo() {
+  const country = activeCountry();
+  const demo = country.copy.demo;
   const reduce = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -14,10 +18,10 @@ export function LandingDemo() {
   });
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 24 });
 
-  const [demoTotal, setDemoTotal] = useState(32400);
+  const [demoTotal, setDemoTotal] = useState(demo.dayTotal);
   const [demoEntries, setDemoEntries] = useState<string[]>([
-    "Cash — ₦2,350 — 9:04am",
-    "Transfer — ₦7,800 — matched 1:22pm",
+    `Cash — ${money(demo.cashSale)} — 9:04am`,
+    `${country.payment.short} — ${money(demo.transfer)} — matched 1:22pm`,
   ]);
   const [voiceReply, setVoiceReply] = useState(
     "Ask me anything about today — sales, debts, who paid last.",
@@ -44,22 +48,22 @@ export function LandingDemo() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Button
               onClick={() => {
-                setDemoTotal((t) => t + 2350);
-                setDemoEntries((e) => [`Cash — ₦2,350 — just now`, ...e].slice(0, 5));
+                setDemoTotal((t) => t + demo.cashSale);
+                setDemoEntries((e) => [`Cash — ${money(demo.cashSale)} — just now`, ...e].slice(0, 5));
               }}
             >
               <CurrencyNgn weight="bold" className="h-4 w-4" />
-              Log ₦2,350 cash
+              Log {money(demo.cashSale)} cash
             </Button>
             <Button
               variant="secondary"
               onClick={() => {
-                setDemoTotal((t) => t + 7800);
-                setDemoEntries((e) => [`Transfer — ₦7,800 — matched`, ...e].slice(0, 5));
+                setDemoTotal((t) => t + demo.transfer);
+                setDemoEntries((e) => [`${country.payment.short} — ${money(demo.transfer)} — matched`, ...e].slice(0, 5));
               }}
             >
               <Bank weight="bold" className="h-4 w-4" />
-              Simulate ₦7,800 transfer
+              Simulate {money(demo.transfer)} transfer
             </Button>
           </div>
         </motion.div>
@@ -81,7 +85,7 @@ export function LandingDemo() {
             </CardHeader>
             <CardContent className="p-0">
               <p className="mt-2 font-mono text-4xl font-bold tracking-tight text-pine md:text-5xl">
-                ₦{demoTotal.toLocaleString()}
+                {money(demoTotal)}
               </p>
               <div className="mt-5 space-y-2">
                 <AnimatePresence initial={false}>
@@ -102,7 +106,7 @@ export function LandingDemo() {
               </div>
               <div className="mt-5 flex flex-wrap gap-2">
                 {VOICE_QUESTIONS.Pidgin.map((q) => (
-                  <Button key={q} variant="secondary" size="sm" onClick={() => setVoiceReply(VOICE_ANSWERS.Pidgin[q] ?? "")}>
+                  <Button key={q} variant="secondary" size="sm" onClick={() => setVoiceReply(voiceAnswers().Pidgin[q] ?? "")}>
                     {q}
                   </Button>
                 ))}

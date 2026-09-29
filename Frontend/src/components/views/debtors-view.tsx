@@ -7,6 +7,7 @@ import { DataTable } from "@/components/data-table";
 import type { DataTableColumn, DataTableFilter } from "@/components/data-table";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { cn } from "@/lib/utils";
+import { useMoney } from "@/lib/money";
 
 interface DebtorsViewProps {
   loading?: boolean;
@@ -31,6 +32,7 @@ export function DebtorsView({
   onCollectDebt,
   onMarkPaid,
 }: DebtorsViewProps) {
+  const money = useMoney();
   const [selected, setSelected] = useState<DebtorEntry | null>(null);
 
   const columns: DataTableColumn<DebtorEntry>[] = [
@@ -88,7 +90,7 @@ export function DebtorsView({
       header: "Owed",
       cell: (d) => (
         <span className="font-mono font-semibold text-destructive">
-          ₦{d.amount.toLocaleString()}
+          {money(d.amount)}
         </span>
       ),
       headerClassName: "text-right",
@@ -195,7 +197,7 @@ export function DebtorsView({
               </p>
             </div>
             <p className="shrink-0 font-mono text-sm font-bold text-destructive">
-              ₦{d.amount.toLocaleString()}
+              {money(d.amount)}
             </p>
             <CaretRight weight="bold" className="h-4 w-4 shrink-0 text-muted-foreground" />
           </div>
@@ -230,7 +232,7 @@ export function DebtorsView({
                   Balance owed
                 </p>
                 <p className="mt-1 font-mono text-2xl font-black text-destructive">
-                  ₦{selected.amount.toLocaleString()}
+                  {money(selected.amount)}
                 </p>
               </div>
 
@@ -248,7 +250,7 @@ export function DebtorsView({
                           {item.qty}× {item.product_name}
                         </span>
                         <span className="font-mono text-muted-foreground">
-                          ₦{(item.price * item.qty).toLocaleString()}
+                          {money((item.price * item.qty))}
                         </span>
                       </li>
                     ))}

@@ -3,7 +3,7 @@ import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "motion
 import { Microphone } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ease, LANGS, VOICE_ANSWERS, VOICE_QUESTIONS, type Lang } from "./shared";
+import { ease, LANGS, voiceAnswers, VOICE_QUESTIONS, type Lang } from "./shared";
 
 const BARS = [10, 22, 16, 30, 24, 34, 18, 26, 14, 28, 20, 32, 16, 24, 12];
 
@@ -22,7 +22,7 @@ export function LandingVoice() {
   });
 
   const q = questions[active] ?? questions[0]!;
-  const reply = VOICE_ANSWERS[lang][q] ?? "";
+  const reply = voiceAnswers()[lang][q] ?? "";
 
   const fadeUp = (delay = 0) => ({
     initial: reduce ? false : { opacity: 0, y: 24 },

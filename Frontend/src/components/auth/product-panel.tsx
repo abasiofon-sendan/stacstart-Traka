@@ -8,6 +8,8 @@ import {
 } from "@phosphor-icons/react";
 import { LogoLockup } from "./logo-lockup";
 import type { AuthVariant } from "./auth-shell";
+import { money } from "@/lib/money";
+import { activeCountry } from "@/store/country-store";
 
 interface ProductPanelProps {
   variant: AuthVariant;
@@ -61,11 +63,12 @@ export function ProductPanel({ variant }: ProductPanelProps) {
 
 /** Sign-in feature card: today's close with ledger bars and chips. */
 function DayCloseCard() {
+  const country = activeCountry();
   return (
     <>
       <div className="absolute -top-5 -left-4 z-10 flex -rotate-3 items-center gap-2 rounded-sm bg-accent-moss px-4 py-3 text-sm font-semibold text-on-accent-moss shadow-soft-lift animate-float">
         <Clock weight="bold" className="h-4 w-4" />
-        Chidi owes you ₦12,500
+        {country.copy.customerA} owes you {money(country.copy.demo.debtorOne)}
       </div>
 
       <div className="rotate-[-2deg] rounded-lg bg-card p-6 text-foreground shadow-modal">
@@ -80,7 +83,7 @@ function DayCloseCard() {
         </div>
 
         <p className="mt-2 font-display text-4xl font-extrabold tracking-tight">
-          ₦48,200
+          {money(country.copy.demo.dayTotal)}
         </p>
 
         <div className="mt-4 flex h-20 items-end gap-2">
@@ -101,14 +104,14 @@ function DayCloseCard() {
               <CurrencyNgn weight="bold" className="h-4 w-4" />
               Cash
             </span>
-            <span className="font-semibold">₦21,400</span>
+            <span className="font-semibold">{money(country.copy.demo.dayCash)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-2 text-muted-foreground">
               <Bank weight="bold" className="h-4 w-4" />
-              Transfer
+              {country.payment.short}
             </span>
-            <span className="font-semibold">₦26,800</span>
+            <span className="font-semibold">{money(country.copy.demo.dayTransfer)}</span>
           </div>
         </div>
       </div>
@@ -120,7 +123,7 @@ function DayCloseCard() {
         <span>
           <span className="block font-semibold">“Who dey owe me?”</span>
           <span className="block text-xs text-muted-foreground">
-            ₦16,500 out — Chidi, Aisha
+            {money(country.copy.demo.debtorTotal)} out — {country.copy.customerA}, {country.copy.customerB}
           </span>
         </span>
       </div>
@@ -128,10 +131,17 @@ function DayCloseCard() {
   );
 }
 
-const LANG_TAGS = ["EN", "Pidgin", "Yoruba", "Hausa", "Swahili"];
+const LANG_LABELS: Record<string, string> = {
+  en: "EN",
+  pidgin: "Pidgin",
+  yo: "Yoruba",
+  ha: "Hausa",
+  sw: "Swahili",
+};
 
 /** Register feature card: voice helper chat in the trader's language. */
 function VoiceCard() {
+  const country = activeCountry();
   return (
     <>
       <div className="absolute -top-5 -left-4 z-10 flex -rotate-3 items-center gap-2 rounded-sm bg-accent-lavender px-4 py-3 text-sm font-semibold text-foreground shadow-soft-lift animate-float">
@@ -155,17 +165,19 @@ function VoiceCard() {
             How much I don sell today?
           </div>
           <div className="w-fit max-w-[90%] rounded-md rounded-bl-sm bg-muted px-4 py-2.5 text-sm">
-            ₦48,200 so far — ₦21,400 cash, ₦26,800 by transfer. Best hour na 12pm.
+            {country.copy.demo.dayTotal} so far — {country.copy.demo.dayCash} cash,{" "}
+            {country.copy.demo.dayTransfer} by {country.payment.label.toLowerCase()}. Best
+            hour na 12pm.
           </div>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2 border-t border-border pt-4">
-          {LANG_TAGS.map((l) => (
+          {country.languages.map((l) => (
             <span
-              key={l}
+              key={LANG_LABELS[l] ?? l}
               className="rounded-full border border-border px-2.5 py-1 text-[10px] font-semibold text-muted-foreground"
             >
-              {l}
+              {LANG_LABELS[l] ?? l}
             </span>
           ))}
         </div>

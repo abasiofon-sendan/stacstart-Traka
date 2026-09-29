@@ -33,6 +33,9 @@ import {
 import { useCreateProduct, useUpdateProduct, useDeleteProduct } from "@/lib/query-hooks";
 import { useInventoryStore } from "@/store/inventory-store";
 import { useToast } from "@/components/ui/toast";
+import { useMoney, toLocalMinor } from "@/lib/money";
+import { useCountryStore } from "@/store/country-store";
+import { getCountry } from "@/lib/countries";
 
 interface InventoryViewProps {
   loading?: boolean;
@@ -78,6 +81,8 @@ export function InventoryView({
   onCommitBatch,
   onDiscardBatch,
 }: InventoryViewProps) {
+  const money = useMoney();
+  const country = getCountry(useCountryStore((s) => s.code));
   const staged = stagedProducts[activeStagedIdx];
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -161,7 +166,18 @@ export function InventoryView({
     } else {
       // Optimistic: append with a temp id and close now, drop it on failure.
       const tempId = `p-local-${Date.now()}`;
-      appendItems([{ id: tempId, name, qty, cost, selling }]);
+      appendItems([
+        {
+          id: tempId,
+          name,
+          qty,
+          cost,
+          selling,
+          currency: country.currency.code,
+          costMinor: toLocalMinor(cost, country),
+          sellingMinor: toLocalMinor(selling, country),
+        },
+      ]);
       setSheetOpen(false);
       const payload: ProductCreate = common;
       createMutation.mutate(payload, {
@@ -231,14 +247,14 @@ export function InventoryView({
     {
       key: "cost",
       header: "Cost",
-      cell: (r) => <span className="font-mono">₦{r.cost.toLocaleString()}</span>,
+      cell: (r) => <span className="font-mono">{money(r.cost)}</span>,
       headerClassName: "text-right",
       cellClassName: "text-right",
     },
     {
       key: "selling",
       header: "Retail",
-      cell: (r) => <span className="font-mono">₦{r.selling.toLocaleString()}</span>,
+      cell: (r) => <span className="font-mono">{money(r.selling)}</span>,
       headerClassName: "text-right",
       cellClassName: "text-right",
     },
@@ -249,7 +265,7 @@ export function InventoryView({
         const margin = r.selling - r.cost;
         return (
           <span className={cn("font-mono font-semibold", margin > 0 ? "text-primary" : "text-muted-foreground")}>
-            ₦{margin.toLocaleString()}
+            {money(margin)}
           </span>
         );
       },
@@ -396,7 +412,7 @@ export function InventoryView({
                     <span>
                       Qty: <b>{p.qty}</b>
                     </span>
-                    <span className="font-bold text-primary">₦{p.selling}</span>
+                    <span className="font-bold text-primary">{money(p.selling)}</span>
                   </div>
                 </Button>
               );
@@ -433,12 +449,12 @@ export function InventoryView({
                     onChange={(v) => onUpdateStagedField(activeStagedIdx, "qty", v)}
                   />
                   <Field
-                    label="Cost (₦)"
+                    label={`Cost (${country.currency.symbol})`}
                     value={staged.cost}
                     onChange={(v) => onUpdateStagedField(activeStagedIdx, "cost", v)}
                   />
                   <Field
-                    label="Sell (₦)"
+                    label={`Sell (${country.currency.symbol})`}
                     value={staged.selling}
                     onChange={(v) => onUpdateStagedField(activeStagedIdx, "selling", v)}
                   />
@@ -494,9 +510,9 @@ export function InventoryView({
                   )}
                 </div>
                 <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  ₦{r.cost.toLocaleString()} · ₦{r.selling.toLocaleString()} ·{" "}
+                  {money(r.cost)} · {money(r.selling)} ·{" "}
                   <span className={margin > 0 ? "font-semibold text-primary" : undefined}>
-                    +₦{margin.toLocaleString()}
+                    +{money(margin)}
                   </span>
                 </p>
               </div>
@@ -543,7 +559,7 @@ export function InventoryView({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label htmlFor="sheet-p-cost" className="text-xs font-semibold text-foreground">
-                  Cost (₦)
+                  Cost ({country.currency.symbol})
                 </label>
                 <Input
                   id="sheet-p-cost"
@@ -557,7 +573,7 @@ export function InventoryView({
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="sheet-p-selling" className="text-xs font-semibold text-foreground">
-                  Retail (₦)
+                  Retail ({country.currency.symbol})
                 </label>
                 <Input
                   id="sheet-p-selling"

@@ -3,6 +3,8 @@ import { Check, HandCoins } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ease } from "./shared";
+import { money } from "@/lib/money";
+import { activeCountry } from "@/store/country-store";
 
 const POINTS = [
   "Itemized lists — 2 bread, 1 milk, with prices",
@@ -11,6 +13,8 @@ const POINTS = [
 ];
 
 export function LandingOwe() {
+  const country = activeCountry();
+  const demo = country.copy.demo;
   const reduce = useReducedMotion();
 
   const fadeUp = (delay = 0) => ({
@@ -48,12 +52,12 @@ export function LandingOwe() {
               <div className="flex items-start justify-between">
                 <div>
                   <span className="rounded bg-red-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-700">Due Friday</span>
-                  <h4 className="mt-2 font-bold">Chidi Okafor</h4>
+                  <h4 className="mt-2 font-bold">{country.copy.customerA}</h4>
                 </div>
-                <span className="font-mono font-bold text-red-600">₦12,500</span>
+                <span className="font-mono font-bold text-red-600">{money(demo.debtorOne)}</span>
               </div>
               <div className="mt-3 rounded-lg border border-border bg-background px-3 py-2 text-xs">
-                2× Bread — ₦8,000 · 1× Milk — ₦4,500
+                2× Bread — {money(demo.debtorOne)} · 1× Milk — {money(demo.debtorTwo)}
               </div>
               <CardContent className="mt-3 flex gap-2 p-0">
                 <Button className="flex-1">
@@ -68,7 +72,7 @@ export function LandingOwe() {
             </Card>
             <div className="flex items-center justify-between rounded-lg border border-dashed border-primary/30 bg-white/70 px-5 py-4 text-sm">
               <span className="font-semibold text-muted-foreground">Total out with 2 people</span>
-              <span className="font-mono text-lg font-bold text-pine">₦16,500</span>
+              <span className="font-mono text-lg font-bold text-pine">{money(demo.debtorTotal)}</span>
             </div>
           </div>
         </motion.div>

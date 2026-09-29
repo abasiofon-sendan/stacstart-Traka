@@ -23,6 +23,9 @@ import {
 } from "@/components/ui/drawer";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import type { InventoryItem } from "@/store/types";
+import { useMoney } from "@/lib/money";
+import { useCountryStore } from "@/store/country-store";
+import { getCountry } from "@/lib/countries";
 
 interface BasketItem {
   prodId: string;
@@ -49,6 +52,8 @@ export function IncomingTransferModal({
   onConfirm,
 }: IncomingTransferModalProps) {
   const [basket, setBasket] = useState<BasketItem[]>([]);
+  const money = useMoney();
+  const country = getCountry(useCountryStore((s) => s.code));
   const [prodId, setProdId] = useState(inventory[0]?.id ?? "");
   const [qty, setQty] = useState(1);
   const [allowOvershoot, setAllowOvershoot] = useState(false);
@@ -114,12 +119,12 @@ export function IncomingTransferModal({
     basket.length > 0 && (isPerfect || (isOver && allowOvershoot));
 
   return (
-    <ResponsiveDialog open={open} onClose={onClose} title="Incoming Transfer" wide>
+    <ResponsiveDialog open={open} onClose={onClose} title={country.payment.label} wide>
         <DrawerHeader>
           <div>
             <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
               <Bank weight="fill" className="h-4 w-4" />
-              Incoming Transfer
+              {country.payment.label}
             </span>
           </div>
           <Button
@@ -135,10 +140,10 @@ export function IncomingTransferModal({
         <DrawerBody>
           <div className="mb-5 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-card p-5 text-center">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Verified Incoming Transfer
+              Verified · {country.payment.label}
             </p>
             <p className="mt-1.5 font-mono text-3xl font-black tracking-tight text-foreground">
-              ₦{incomingAmount.toLocaleString()}
+              {money(incomingAmount)}
             </p>
             {sender && (
               <p className="mt-2 text-xs font-semibold text-muted-foreground">
@@ -163,7 +168,7 @@ export function IncomingTransferModal({
                 <SelectContent noPortal>
                   {inventory.map((i) => (
                     <SelectItem key={i.id} value={i.id}>
-                      {i.name} — ₦{i.selling.toLocaleString()}
+                      {i.name} — {money(i.selling)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -247,13 +252,13 @@ export function IncomingTransferModal({
                             +
                           </Button>
                           <span className="ml-1 text-[10px] text-muted-foreground">
-                            × ₦{item.selling.toLocaleString()}
+                            × {money(item.selling)}
                           </span>
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-2.5">
                         <span className="font-mono text-sm font-black text-foreground">
-                          ₦{lineTotal.toLocaleString()}
+                          {money(lineTotal)}
                         </span>
                         <Button
                           type="button"
@@ -276,7 +281,7 @@ export function IncomingTransferModal({
                   Basket Total
                 </span>
                 <span className="font-mono text-base font-black text-foreground">
-                  ₦{basketTotal.toLocaleString()}
+                  {money(basketTotal)}
                 </span>
               </div>
 
@@ -289,11 +294,11 @@ export function IncomingTransferModal({
                     />
                     <div>
                       <p className="text-xs font-bold text-amber-900">
-                        Basket total (₦{basketTotal.toLocaleString()}) is less
+                        Basket total ({money(basketTotal)}) is less
                         than transfer
                       </p>
                       <p className="mt-0.5 text-[11px] text-amber-700">
-                        Add ₦{absDiff.toLocaleString()} more in products to
+                        Add {money(absDiff)} more in products to
                         match.
                       </p>
                     </div>
@@ -307,8 +312,7 @@ export function IncomingTransferModal({
                       className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500"
                     />
                     <p className="text-xs font-bold text-emerald-900">
-                      Matches transfer exactly! (₦
-                      {basketTotal.toLocaleString()})
+                      Matches the payment exactly! ({money(basketTotal)})
                     </p>
                   </div>
                 )}
@@ -322,9 +326,8 @@ export function IncomingTransferModal({
                       />
                       <div>
                         <p className="text-xs font-bold text-rose-900">
-                          Basket total (₦
-                          {basketTotal.toLocaleString()}) exceeds transfer by ₦
-                          {absDiff.toLocaleString()}
+                          Basket total ({money(basketTotal)}) exceeds the payment by{" "}
+                          {money(absDiff)}
                         </p>
                       </div>
                     </div>

@@ -9,7 +9,10 @@ import { accountsApi } from "@/lib/endpoints";
 import { getErrorMessage } from "@/lib/utils";
 import { Field } from "./field";
 import { PhoneInput } from "./phone-input";
+import { CountrySelect } from "./country-select";
 import { isValidLocalPhone, toStoredPhone } from "@/lib/phone";
+import { useCountryStore } from "@/store/country-store";
+import { getCountry, type CountryCode } from "@/lib/countries";
 import { PinInput } from "./pin-input";
 import { AuthFooter } from "./auth-footer";
 
@@ -19,6 +22,9 @@ interface RegisterFormProps {
 
 export function RegisterForm({ onAuthenticate }: RegisterFormProps) {
   const { toast } = useToast();
+  const countryCode = useCountryStore((s) => s.code);
+  const setCountry = useCountryStore((s) => s.setCountry);
+  const country = getCountry(countryCode);
   const [businessName, setBusinessName] = useState("");
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
@@ -27,14 +33,14 @@ export function RegisterForm({ onAuthenticate }: RegisterFormProps) {
   const [error, setError] = useState("");
 
   const canSignup =
-    businessName.trim() && isValidLocalPhone(phone) && pin.length === 6 && terms;
+    businessName.trim() && isValidLocalPhone(phone, country) && pin.length === 6 && terms;
 
   const handleSignup = async () => {
     if (!canSignup) {
-      if (phone && !isValidLocalPhone(phone)) {
+      if (phone && !isValidLocalPhone(phone, country)) {
         toast({
           title: "Invalid Phone Number",
-          description: "Enter a valid Nigerian number starting with 070, 080, or 090.",
+          description: `Enter a valid ${country.name} number. ${country.phone.helper}`,
           variant: "destructive",
         });
       }
@@ -46,8 +52,10 @@ export function RegisterForm({ onAuthenticate }: RegisterFormProps) {
       const res = await accountsApi.signup({
         business_name: businessName.trim(),
         phone_number: toStoredPhone(phone),
+        country: country.code,
         pin,
       });
+      setCountry(country.code);
       localStorage.setItem(
         "traka_user",
         JSON.stringify({
@@ -56,6 +64,7 @@ export function RegisterForm({ onAuthenticate }: RegisterFormProps) {
           virtualAccountNumber: res.virtual_account_number,
           businessName: businessName.trim(),
           phone: toStoredPhone(phone),
+          country: country.code,
           createdAt: new Date().toISOString(),
         }),
       );
@@ -87,11 +96,27 @@ export function RegisterForm({ onAuthenticate }: RegisterFormProps) {
           void handleSignup();
         }}
       >
+        <Field
+          label="Country"
+          htmlFor="register-country"
+          required
+          helper="Sets your currency, payment label and store language."
+        >
+          <CountrySelect
+            id="register-country"
+            value={countryCode}
+            onChange={(c: CountryCode) => {
+              setCountry(c);
+              setPhone("");
+            }}
+          />
+        </Field>
+
         <Field label="Business name" htmlFor="register-name" required>
           <Input
             id="register-name"
             type="text"
-            placeholder="e.g. Mama Nkechi Stores"
+            placeholder={`e.g. ${country.sampleStore}`}
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
             autoComplete="organization"
@@ -102,12 +127,13 @@ export function RegisterForm({ onAuthenticate }: RegisterFormProps) {
           label="Phone number"
           htmlFor="register-phone"
           required
-          helper="We'll use this number to sign you in."
+          helper={`${country.phone.helper} We'll use this number to sign you in.`}
         >
           <PhoneInput
             id="register-phone"
             value={phone}
             onValueChange={setPhone}
+            country={country}
             autoComplete="tel"
           />
         </Field>

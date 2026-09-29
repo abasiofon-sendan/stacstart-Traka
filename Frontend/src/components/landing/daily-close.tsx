@@ -4,6 +4,8 @@ import { TrendUp, Check } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ease } from "./shared";
+import { money } from "@/lib/money";
+import { activeCountry } from "@/store/country-store";
 
 interface BarDatum {
   d: string;
@@ -49,6 +51,8 @@ function Bar({
 }
 
 export function LandingDailyClose() {
+  const country = activeCountry();
+  const demo = country.copy.demo;
   const reduce = useReducedMotion();
   const chartRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -99,7 +103,7 @@ export function LandingDailyClose() {
           <div className="mt-6 grid grid-cols-2 gap-3">
             <Card className="p-5">
               <p className="text-xs font-medium text-muted-foreground">Today’s revenue</p>
-              <p className="mt-1 font-mono text-xl font-bold">₦48,200</p>
+              <p className="mt-1 font-mono text-xl font-bold">{money(demo.dayTotal)}</p>
               <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-primary">
                 <TrendUp weight="bold" className="h-3.5 w-3.5" />
                 +14% vs yesterday
@@ -107,23 +111,23 @@ export function LandingDailyClose() {
             </Card>
             <Card className="p-5">
               <p className="text-xs font-medium text-muted-foreground">Out with debtors</p>
-              <p className="mt-1 font-mono text-xl font-bold">₦16,500</p>
+              <p className="mt-1 font-mono text-xl font-bold">{money(demo.debtorTotal)}</p>
               <p className="mt-1 text-[11px] font-bold text-muted-foreground">2 people · due this week</p>
             </Card>
           </div>
           <div className="mt-3 animate-float rounded-2xl border border-border bg-white p-6 shadow-card">
             <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Tonight’s close · Mama Blessing
+              Tonight’s close · {country.sampleStore}
             </p>
-            <p className="mt-2 font-mono text-4xl font-bold tracking-tight text-pine">₦48,200</p>
+            <p className="mt-2 font-mono text-4xl font-bold tracking-tight text-pine">{money(demo.dayTotal)}</p>
             <div className="mt-4 space-y-2 text-sm text-foreground">
               <div className="flex items-center justify-between rounded-lg bg-muted px-3.5 py-2.5">
                 <span>Cash · 14 sales</span>
-                <span className="font-mono font-bold">₦21,400</span>
+                <span className="font-mono font-bold">{money(demo.dayCash)}</span>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-muted px-3.5 py-2.5">
                 <span>Transfer · 9 matched</span>
-                <span className="font-mono font-bold">₦26,800</span>
+                <span className="font-mono font-bold">{money(demo.dayTransfer)}</span>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-primary/10 px-3.5 py-2.5 font-semibold text-primary">
                 <span className="inline-flex items-center gap-1.5">

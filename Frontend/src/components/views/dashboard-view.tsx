@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OnboardingEmptyState } from "@/components/views/onboarding-empty-state";
 import type { InventoryItem } from "@/store/types";
+import { useCountryStore } from "@/store/country-store";
+import { getCountry } from "@/lib/countries";
+import { formatAmount } from "@/lib/money";
 import { useState } from "react";
 
 interface DashboardViewProps {
@@ -50,6 +53,8 @@ export function DashboardView({
 }: DashboardViewProps) {
   const topTwo = inventory.slice(0, 2);
   const [copied, setCopied] = useState(false);
+  const country = getCountry(useCountryStore((s) => s.code));
+  const money = (amount: number) => formatAmount(amount, country);
 
   const copyNumber = () => {
     if (!accountNumber) return;
@@ -155,13 +160,13 @@ export function DashboardView({
           <div className="grid grid-cols-2 gap-3">
             <MetricCard
               label="Today's Revenue"
-              value={`₦${revenue.toLocaleString()}`}
+              value={money(revenue)}
               icon={Wallet}
               color="text-primary"
             />
             <MetricCard
               label="Estimated Profit"
-              value={`₦${profit.toLocaleString()}`}
+              value={money(profit)}
               icon={TrendUp}
               color="text-primary"
             />
@@ -170,7 +175,7 @@ export function DashboardView({
           <div className="grid grid-cols-2 gap-3">
             <MetricCard
               label="Outstanding Debt"
-              value={`₦${totalDebt.toLocaleString()}`}
+              value={money(totalDebt)}
               subtitle={unpaidDebtorCount > 0 ? `${unpaidDebtorCount} debtor${unpaidDebtorCount !== 1 ? "s" : ""}` : undefined}
               icon={HandCoins}
               color="text-rose-500"
@@ -190,8 +195,8 @@ export function DashboardView({
             <div className="grid grid-cols-2 gap-3">
               <ActionCard
                 icon={Bank}
-                label="Incoming Transfer"
-                desc="Log a bank transfer sale"
+                label={country.payment.short}
+                desc={`Log a ${country.payment.label.toLowerCase()}`}
                 iconBg="bg-primary/10"
                 iconColor="text-primary"
                 hoverBorder="hover:border-primary/30"
@@ -236,7 +241,7 @@ export function DashboardView({
                     </p>
                   </div>
                   <span className="rounded-md bg-background px-2 py-1 font-semibold text-muted-foreground">
-                    ₦{item.selling}
+                    {money(item.selling)}
                   </span>
                 </div>
               ))}

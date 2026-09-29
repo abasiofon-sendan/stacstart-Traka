@@ -8,6 +8,10 @@ import { useAuthStore } from "./auth-store";
 import { useSessionStore } from "./session-store";
 import { useInventoryStore } from "./inventory-store";
 import { useDebtorsStore } from "./debtors-store";
+import { useCountryStore } from "./country-store";
+import { getCountry } from "@/lib/countries";
+import { toMoney, asCurrency } from "@/lib/money";
+import { seedCountryInventory } from "@/lib/seed";
 
 // Routes that render no app data. /auth/whatsapp is the post-signup step —
 // it polls its own /accounts/whatsapp-status but must not pull the whole
@@ -69,6 +73,14 @@ export function StoreBootstrap({ children, pathname }: StoreBootstrapProps) {
     useSessionStore.getState().setMe(meData ?? null);
   }, [meData]);
 
+  // The account's country on the server is the truth. localStorage only
+  // carries a guess — set at signup, or picked on the sign-in screen — so
+  // wherever they disagree (an account created before signup sent `country`),
+  // the server wins and the ledger relabels to the right currency.
+  useEffect(() => {
+    if (meData?.country) useCountryStore.getState().adoptCountry(meData.country);
+  }, [meData]);
+
   useEffect(() => {
     useSessionStore.getState().setDashboard(dashboardData ?? null);
   }, [dashboardData]);
@@ -81,37 +93,68 @@ export function StoreBootstrap({ children, pathname }: StoreBootstrapProps) {
     });
   }, [inventoryLoading, debtorsLoading, dashboardLoading]);
 
+  // Subscribed rather than read via getState(): adoptCountry() above runs in
+  // an effect, and without a subscription this would keep the pre-/me country
+  // until something else happened to re-render us — converting debts with one
+  // country's scale while every display component formats in another's.
+  // Products and debtors also carry their own currency from the API, so this
+  // is only the fallback for payloads from before they did.
+  const currency = getCountry(useCountryStore((s) => s.code)).currency.code;
+
   useEffect(() => {
     if (inventoryData) {
       useInventoryStore.getState().replaceItems(
-        inventoryData.map((p) => ({
-          id: p.id,
-          name: p.name,
-          qty: p.quantity,
-          cost: p.cost_price,
-          selling: p.selling_price,
-        })),
+        inventoryData.map((p) => {
+          // Prefer the product's own currency: an account whose country we
+          // have only just adopted must not render its stock in the old one.
+          const c = asCurrency(p.currency, currency);
+          return {
+            id: p.id,
+            name: p.name,
+            qty: p.quantity,
+            cost: p.cost_price,
+            selling: p.selling_price,
+            currency: c,
+            costMinor: toMoney(p.cost_price, c).minor,
+            sellingMinor: toMoney(p.selling_price, c).minor,
+          };
+        }),
       );
     }
-  }, [inventoryData]);
+  }, [inventoryData, currency]);
+
+  // A brand-new store lands on an empty ledger otherwise. Only fires once per
+  // account+country, and only when the inventory is genuinely empty or was
+  // seeded at zero stock. /me must have resolved first: it carries the
+  // account's real country, and seeding before it lands would post another
+  // market's products at its prices.
+  useEffect(() => {
+    if (!appDataEnabled || inventoryLoading || !meData) return;
+    void seedCountryInventory(inventoryData);
+  }, [appDataEnabled, inventoryLoading, meData, inventoryData]);
 
   useEffect(() => {
     if (debtorsData) {
       useDebtorsStore.getState().replaceEntries(
-        debtorsData.debtors.map((d) => ({
-          id: d.id,
-          name: d.name,
-          amount: d.amount,
-          date: d.created_at.split("T")[0]!,
-          items: d.items.map((i) => ({
-            product_name: i.product_name,
-            qty: i.qty,
-            price: i.price,
-          })),
-        })),
+        debtorsData.debtors.map((d) => {
+          const c = asCurrency(d.currency, currency);
+          return {
+            id: d.id,
+            name: d.name,
+            amount: d.amount,
+            date: d.created_at.split("T")[0]!,
+            items: d.items.map((i) => ({
+              product_name: i.product_name,
+              qty: i.qty,
+              price: i.price,
+            })),
+            currency: c,
+            amountMinor: toMoney(d.amount, c).minor,
+          };
+        }),
       );
     }
-  }, [debtorsData]);
+  }, [debtorsData, currency]);
 
   return <>{children}</>;
 }

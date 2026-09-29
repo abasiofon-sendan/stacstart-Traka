@@ -35,7 +35,10 @@ function DrawerOverlay({
     <DrawerPrimitive.Overlay
       data-slot="drawer-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/30 backdrop-blur-xs left-0 right-0 mx-auto w-full max-w-[420px]",
+        // Full-viewport scrim. The phone-frame width only ever applied to the
+        // panel — capping the overlay too left the rest of a tablet screen
+        // undimmed, and clicks there fell through to the page behind.
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/30 backdrop-blur-xs",
         className
       )}
       {...props}
@@ -54,7 +57,10 @@ function DrawerContent({
       <DrawerPrimitive.Content
         data-slot="drawer-content"
         className={cn(
-          "fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[420px] z-50 mt-24 flex h-auto max-h-[85dvh] flex-col rounded-t-lg border-t border-border bg-card shadow-modal",
+          // Phone-frame width on phones; drawers only render below lg, so md is
+          // the tablet case — there they widen instead of staying a 420px strip
+          // centred on a full-width content column.
+          "fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[420px] sm:max-w-lg md:max-w-2xl z-50 mt-24 flex h-auto max-h-[85dvh] flex-col rounded-t-lg border-t border-border bg-card shadow-modal",
           className
         )}
         {...props}

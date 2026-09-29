@@ -10,6 +10,9 @@ import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { inventoryApi } from "@/lib/endpoints";
 import { queryClient } from "@/lib/query-client";
 import type { InventoryItem } from "@/store/types";
+import { useMoney } from "@/lib/money";
+import { useCountryStore } from "@/store/country-store";
+import { getCountry } from "@/lib/countries";
 
 interface EditProductDrawerProps {
   open: boolean;
@@ -18,6 +21,8 @@ interface EditProductDrawerProps {
 }
 
 export function EditProductDrawer({ open, onClose, target }: EditProductDrawerProps) {
+  const money = useMoney();
+  const country = getCountry(useCountryStore((s) => s.code));
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -112,7 +117,7 @@ export function EditProductDrawer({ open, onClose, target }: EditProductDrawerPr
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase text-muted-foreground">Cost (₦)</label>
+                <label className="block text-[10px] font-bold uppercase text-muted-foreground">Cost ({country.currency.symbol})</label>
                 <Input
                   type="number"
                   value={cost || ""}
@@ -121,7 +126,7 @@ export function EditProductDrawer({ open, onClose, target }: EditProductDrawerPr
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold uppercase text-muted-foreground">Sell (₦)</label>
+                <label className="block text-[10px] font-bold uppercase text-muted-foreground">Sell ({country.currency.symbol})</label>
                 <Input
                   type="number"
                   value={selling || ""}
@@ -134,7 +139,7 @@ export function EditProductDrawer({ open, onClose, target }: EditProductDrawerPr
             <div className="rounded-xl border border-border bg-muted/30 p-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Margin</span>
-                <span className="font-extrabold text-foreground">₦{margin}</span>
+                <span className="font-extrabold text-foreground">{money(margin)}</span>
               </div>
               <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
                 <div

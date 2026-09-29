@@ -2,6 +2,8 @@ import { create } from "zustand";
 import type { InventoryItem } from "./types";
 import { notify } from "./notify";
 import { getErrorMessage } from "@/lib/utils";
+import { money } from "@/lib/money";
+import { activeCountry } from "@/store/country-store";
 
 interface InventoryState {
   /** Local mirror of /inventory, adjusted by cash sales and batch commits. */
@@ -48,7 +50,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     });
     notify(
       "Cash Sale Recorded",
-      `Manually logged cash payment of ₦${item.selling * qty} for ${qty}x ${item.name}.`,
+      `Manually logged cash payment of ${money(item.selling * qty)} for ${qty}x ${item.name}.`,
     );
     const { api } = await import("@/lib/api");
     try {
@@ -77,7 +79,7 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
     });
     notify(
       "Transfer Received",
-      `₦${item.selling * qty} transfer cleared for ${qty}x ${item.name}.`,
+      `${money(item.selling * qty)} ${activeCountry().payment.label.toLowerCase()} for ${qty}x ${item.name}.`,
     );
     const { api } = await import("@/lib/api");
     try {

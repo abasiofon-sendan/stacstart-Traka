@@ -7,6 +7,9 @@ import { DataTable } from "@/components/data-table";
 import type { DataTableColumn, DataTableFilter } from "@/components/data-table";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { cn } from "@/lib/utils";
+import { useMoney } from "@/lib/money";
+import { useCountryStore } from "@/store/country-store";
+import { getCountry } from "@/lib/countries";
 
 type Tx = UnallocatedTransactionResponse;
 
@@ -16,7 +19,7 @@ interface TransactionsViewProps {
 }
 
 /** Cash sales post with sender "Cash" / payment method CASH; everything else
- *  is a bank transfer that needs matching. */
+ *  is a remote payment (bank transfer, M-Pesa, MoMo) that needs matching. */
 function txKind(tx: Tx): "cash" | "transfer" {
   if ((tx.payment_method ?? "").toUpperCase() === "CASH") return "cash";
   if ((tx.sender_name ?? "").trim().toLowerCase() === "cash") return "cash";
@@ -56,6 +59,8 @@ function formatDateTime(iso: string): string {
 }
 
 export function TransactionsView({ loading, transactions }: TransactionsViewProps) {
+  const money = useMoney();
+  const country = getCountry(useCountryStore((s) => s.code));
   const [selected, setSelected] = useState<Tx | null>(null);
 
   const columns: DataTableColumn<Tx>[] = [
@@ -87,7 +92,7 @@ export function TransactionsView({ loading, transactions }: TransactionsViewProp
           </span>
         ) : (
           <span className="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-accent-foreground">
-            Transfer
+            {country.payment.short}
           </span>
         ),
       cellClassName: "w-28",
@@ -122,10 +127,10 @@ export function TransactionsView({ loading, transactions }: TransactionsViewProp
       header: "Amount",
       cell: (t) => (
         <div>
-          <p className="font-mono font-semibold">₦{t.amount.toLocaleString()}</p>
+          <p className="font-mono font-semibold">{money(t.amount)}</p>
           {t.profit != null && t.profit > 0 && (
             <p className="mt-0.5 font-mono text-[11px] font-semibold text-emerald-600">
-              +₦{t.profit.toLocaleString()}
+              +{money(t.profit)}
             </p>
           )}
         </div>
@@ -141,7 +146,7 @@ export function TransactionsView({ loading, transactions }: TransactionsViewProp
       label: "Type",
       options: [
         { label: "Cash", value: "cash" },
-        { label: "Transfer", value: "transfer" },
+        { label: country.payment.short, value: "transfer" },
       ],
       get: (t) => txKind(t),
     },
@@ -193,14 +198,14 @@ export function TransactionsView({ loading, transactions }: TransactionsViewProp
                 </span>
               </div>
               <p className="mt-1 truncate text-xs text-muted-foreground">
-                {txKind(t) === "cash" ? "Cash" : "Transfer"} · {formatDateTime(t.created_at)}
+                {txKind(t) === "cash" ? "Cash" : country.payment.short} · {formatDateTime(t.created_at)}
               </p>
             </div>
             <div className="shrink-0 text-right">
-              <p className="font-mono text-sm font-bold">₦{t.amount.toLocaleString()}</p>
+              <p className="font-mono text-sm font-bold">{money(t.amount)}</p>
               {t.profit != null && t.profit > 0 && (
                 <p className="mt-0.5 font-mono text-[10px] font-semibold text-emerald-600">
-                  +₦{t.profit.toLocaleString()}
+                  +{money(t.profit)}
                 </p>
               )}
             </div>
@@ -230,11 +235,11 @@ export function TransactionsView({ loading, transactions }: TransactionsViewProp
                   Amount
                 </p>
                 <p className="mt-1 font-mono text-2xl font-black text-foreground">
-                  ₦{selected.amount.toLocaleString()}
+                  {money(selected.amount)}
                 </p>
                 {selected.profit != null && selected.profit > 0 && (
                   <p className="mt-1 font-mono text-xs font-semibold text-emerald-600">
-                    +₦{selected.profit.toLocaleString()} profit
+                    +{money(selected.profit)} profit
                   </p>
                 )}
                 <div className="mt-3 flex gap-1.5">
@@ -246,7 +251,7 @@ export function TransactionsView({ loading, transactions }: TransactionsViewProp
                         : "bg-accent text-accent-foreground",
                     )}
                   >
-                    {txKind(selected) === "cash" ? "Cash" : "Transfer"}
+                    {txKind(selected) === "cash" ? "Cash" : country.payment.label}
                   </span>
                   <span
                     className={cn(

@@ -3,6 +3,8 @@ import type { DebtorEntry, DebtorItem, PaidDebt } from "./types";
 import { debtorsApi } from "@/lib/endpoints";
 import { notify } from "./notify";
 import { getErrorMessage } from "@/lib/utils";
+import { money, toMoney } from "@/lib/money";
+import { activeCountry } from "./country-store";
 
 interface DebtorsState {
   /** Local mirror of /debtors, adjusted by log/settle actions. */
@@ -22,10 +24,23 @@ export const useDebtorsStore = create<DebtorsState>()((set, get) => ({
   logDebt: async (name, amount, date, items) => {
     // Optimistic: show the debt immediately, swap in the server id after.
     const tempId = `d-local-${Date.now()}`;
-    set({ entries: [...get().entries, { id: tempId, name, amount, date, items }] });
+    set({
+      entries: [
+        ...get().entries,
+        {
+          id: tempId,
+          name,
+          amount,
+          date,
+          items,
+          currency: activeCountry().currency.code,
+          amountMinor: toMoney(amount, activeCountry().currency.code).minor,
+        },
+      ],
+    });
     notify(
       "Credit Logged",
-      `Logged ₦${amount} pending payment debt balance for ${name}.`,
+      `Logged ${money(amount)} pending payment debt balance for ${name}.`,
     );
     try {
       const created = await debtorsApi.create({
@@ -63,7 +78,7 @@ export const useDebtorsStore = create<DebtorsState>()((set, get) => ({
     });
     notify(
       "Debt Fully Settled",
-      `${target.name} cleared balance of ₦${target.amount.toLocaleString()}.`,
+      `${target.name} cleared balance of ${money(target.amount)}.`,
     );
     try {
       await debtorsApi.settle(id, { payment_method: "CASH" });
