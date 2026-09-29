@@ -16,6 +16,7 @@ COUNTRIES: dict[str, dict] = {
         "decimals": 2,
         "subunit": "kobo",
         "languages": ["en", "yo", "ha", "pidgin"],
+        "default_language": "en",
         "payment_title": "Store account",
         "payment_channel": "bank transfer",
         "payment_template": "{amount} received from {sender} via bank transfer",
@@ -37,6 +38,7 @@ COUNTRIES: dict[str, dict] = {
         "decimals": 2,
         "subunit": "cent",
         "languages": ["en", "sw"],
+        "default_language": "sw",
         "payment_title": "M-Pesa payment received",
         "payment_channel": "M-Pesa",
         "payment_template": "{amount} received from {sender} via M-Pesa",
@@ -58,6 +60,7 @@ COUNTRIES: dict[str, dict] = {
         "decimals": 2,
         "subunit": "pesewa",
         "languages": ["en"],
+        "default_language": "en",
         "payment_title": "MoMo payment received",
         "payment_channel": "MoMo",
         "payment_template": "{amount} received from {sender} via MoMo",
@@ -79,6 +82,7 @@ COUNTRIES: dict[str, dict] = {
         "decimals": 0,
         "subunit": "shilling",
         "languages": ["en", "sw"],
+        "default_language": "sw",
         "payment_title": "MoMo payment received",
         "payment_channel": "MoMo",
         "payment_template": "{amount} received from {sender} via MoMo",
@@ -106,6 +110,14 @@ def get_country(code: str) -> dict:
 
 
 _CURRENCY_TO_COUNTRY = {cfg["currency"]: code for code, cfg in COUNTRIES.items()}
+
+
+def default_language(code: str) -> str:
+    """Assistant language when the client doesn't pick one (KE/UG -> Swahili)."""
+    try:
+        return get_country(resolve_country(code)).get("default_language", "en")
+    except KeyError:
+        return "en"
 
 
 def resolve_country(code: str) -> str:

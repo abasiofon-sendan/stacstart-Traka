@@ -5,6 +5,8 @@ from typing import Literal, Optional
 
 from app.db.database import get_db
 from app.accounts.service import get_current_account_id
+from app.accounts import models as acct_models
+from app.core.countries import default_language
 from app.voice import service
 
 router = APIRouter(prefix="/voice", tags=["voice"])
@@ -24,9 +26,18 @@ class AdvisorResponse(BaseModel):
 
 class TextAskRequest(BaseModel):
     question: str
-    language: Optional[Literal["en", "yo", "ha", "pidgin"]] = "en"
+    language: Optional[Literal["en", "yo", "ha", "pidgin", "sw"]] = None
     # If the user picks their language in the UI, pass it here.
-    # Defaults to "en" so the LLM still works without a choice.
+    # When omitted, it defaults to the account country's language
+    # (Swahili for KE/UG, English elsewhere).
+
+
+def _resolve_language(db: Session, account_id: str, language: Optional[str]) -> str:
+    if language:
+        return language
+    acc = db.query(acct_models.Account).filter(
+        acct_models.Account.id == account_id).first()
+    return default_language(acc.country if acc and acc.country else "NG")
 
 
 @router.post("/ask/text", response_model=AdvisorResponse)
@@ -43,15 +54,18 @@ def text_ask(
       "en"     → English
       "yo"     → Yoruba
       "ha"     → Hausa
-      "pidgin" → Nigerian Pidgin (default when omitted)
+      "pidgin" → Nigerian Pidgin
+      "sw"     → Swahili (Kiswahili)
+    Omit it to use the account country's default (Swahili for KE/UG).
     """
     if not body.question.strip():
         raise HTTPException(status_code=400, detail="Question cannot be empty")
 
+    language = _resolve_language(db, account_id, body.language)
     try:
         reply = service.groq_advise(
             transcript=body.question.strip(),
-            language=body.language,
+            language=language,
             db=db,
             account_id=account_id,
         )
@@ -60,7 +74,7 @@ def text_ask(
 
     return AdvisorResponse(
         transcript=body.question.strip(),
-        language_detected=body.language,
+        language_detected=language,
         reply=reply,
     )
 
@@ -78,7 +92,7 @@ async def voice_ask(
     answers the question using live business data.
 
     Language is detected automatically from the audio — Pidgin, Yoruba,
-    Hausa, and English are all supported. Reply matches detected language.
+    Hausa, Swahili, and English are all supported. Reply matches detected language.
     """
     audio_bytes = await audio.read()
 
