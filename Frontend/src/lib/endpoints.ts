@@ -40,8 +40,12 @@ export interface ProductResponse {
   id: string;
   account_id: string;
   name: string;
+  /** Major units, in this product's `currency`. */
   cost_price: number;
+  /** Major units, in this product's `currency`. */
   selling_price: number;
+  /** The account's currency — prices above are denominated in it. */
+  currency: string;
   quantity: number;
   low_stock_threshold: number;
   created_at: string;
@@ -142,6 +146,8 @@ export interface DashboardResponse {
   total_debt_outstanding: number;
   unpaid_debtor_count: number;
   low_stock_count: number;
+  /** Currency all the amounts above are denominated in. */
+  currency: string;
 }
 
 export interface FastestSellingProduct {

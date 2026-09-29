@@ -32,6 +32,18 @@ export function getCountryForCurrency(currency: CurrencyCode): CountryConfig {
   return CURRENCY_OWNERS[currency];
 }
 
+/**
+ * Narrow an untrusted currency string (straight off an API payload) to a code
+ * we can format with — `getCountryForCurrency` indexes a record, so an unknown
+ * code would otherwise throw.
+ */
+export function asCurrency(
+  code: string | null | undefined,
+  fallback: CurrencyCode = "NGN",
+): CurrencyCode {
+  return code && code in CURRENCY_OWNERS ? (code as CurrencyCode) : fallback;
+}
+
 /** Major units (as the API sends them) → whole minor units. */
 export function toMoney(amount: number, currency: CurrencyCode): Money {
   const scale = scaleFor(currency);

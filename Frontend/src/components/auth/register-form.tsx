@@ -52,6 +52,7 @@ export function RegisterForm({ onAuthenticate }: RegisterFormProps) {
       const res = await accountsApi.signup({
         business_name: businessName.trim(),
         phone_number: toStoredPhone(phone),
+        country: country.code,
         pin,
       });
       setCountry(country.code);

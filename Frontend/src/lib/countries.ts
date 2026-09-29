@@ -323,11 +323,27 @@ export const COUNTRY_LIST: CountryConfig[] = [
 
 export const DEFAULT_COUNTRY: CountryCode = "NG";
 
+/**
+ * Opening stock given to starter products the backend seeds with quantity 0.
+ * The app applies it on a merchant's first open; the demo-provisioning script
+ * applies the same number to the demo rows. One constant so the two can't
+ * disagree. Becomes irrelevant once the backend seeds real stock — nothing
+ * sits at zero, so neither caller fires.
+ */
+export const STARTER_SHELF_QTY = 12;
+
 export function getCountry(code: CountryCode | string | null | undefined): CountryConfig {
   if (code && code in COUNTRIES) {
     return COUNTRIES[code as CountryCode];
   }
   return COUNTRIES[DEFAULT_COUNTRY];
+}
+
+/** Narrow an untrusted string (localStorage, API payload) to a known code. */
+export function isCountryCode(
+  raw: string | null | undefined,
+): raw is CountryCode {
+  return !!raw && raw in COUNTRIES;
 }
 
 /** Every demo account across all countries, flagged with its country. */

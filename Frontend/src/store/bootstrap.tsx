@@ -8,8 +8,8 @@ import { useAuthStore } from "./auth-store";
 import { useSessionStore } from "./session-store";
 import { useInventoryStore } from "./inventory-store";
 import { useDebtorsStore } from "./debtors-store";
-import { activeCountry } from "./country-store";
-import { toMoney } from "@/lib/money";
+import { activeCountry, useCountryStore } from "./country-store";
+import { toMoney, asCurrency } from "@/lib/money";
 import { seedCountryInventory } from "@/lib/seed";
 
 // Routes that render no app data. /auth/whatsapp is the post-signup step —
@@ -72,6 +72,14 @@ export function StoreBootstrap({ children, pathname }: StoreBootstrapProps) {
     useSessionStore.getState().setMe(meData ?? null);
   }, [meData]);
 
+  // The account's country on the server is the truth. localStorage only
+  // carries a guess — set at signup, or picked on the sign-in screen — so
+  // wherever they disagree (an account created before signup sent `country`),
+  // the server wins and the ledger relabels to the right currency.
+  useEffect(() => {
+    if (meData?.country) useCountryStore.getState().adoptCountry(meData.country);
+  }, [meData]);
+
   useEffect(() => {
     useSessionStore.getState().setDashboard(dashboardData ?? null);
   }, [dashboardData]);
@@ -84,34 +92,42 @@ export function StoreBootstrap({ children, pathname }: StoreBootstrapProps) {
     });
   }, [inventoryLoading, debtorsLoading, dashboardLoading]);
 
-  // The backend has no currency column yet, so records pick up the active
-  // country's code and its whole-minor-unit amount here, at the one place
-  // server data enters the app.
+  // Products carry their own currency from the API; debtors don't, so those
+  // fall back to the active country. Minor-unit amounts are derived here, at
+  // the one place server data enters the app.
   const currency = activeCountry().currency.code;
 
   useEffect(() => {
     if (inventoryData) {
       useInventoryStore.getState().replaceItems(
-        inventoryData.map((p) => ({
-          id: p.id,
-          name: p.name,
-          qty: p.quantity,
-          cost: p.cost_price,
-          selling: p.selling_price,
-          currency,
-          costMinor: toMoney(p.cost_price, currency).minor,
-          sellingMinor: toMoney(p.selling_price, currency).minor,
-        })),
+        inventoryData.map((p) => {
+          // Prefer the product's own currency: an account whose country we
+          // have only just adopted must not render its stock in the old one.
+          const c = asCurrency(p.currency, currency);
+          return {
+            id: p.id,
+            name: p.name,
+            qty: p.quantity,
+            cost: p.cost_price,
+            selling: p.selling_price,
+            currency: c,
+            costMinor: toMoney(p.cost_price, c).minor,
+            sellingMinor: toMoney(p.selling_price, c).minor,
+          };
+        }),
       );
     }
   }, [inventoryData, currency]);
 
   // A brand-new store lands on an empty ledger otherwise. Only fires once per
-  // account+country, and only when the inventory is genuinely empty.
+  // account+country, and only when the inventory is genuinely empty or was
+  // seeded at zero stock. /me must have resolved first: it carries the
+  // account's real country, and seeding before it lands would post another
+  // market's products at its prices.
   useEffect(() => {
-    if (!appDataEnabled || inventoryLoading) return;
-    void seedCountryInventory(inventoryData?.length ?? 0);
-  }, [appDataEnabled, inventoryLoading, inventoryData?.length]);
+    if (!appDataEnabled || inventoryLoading || !meData) return;
+    void seedCountryInventory(inventoryData);
+  }, [appDataEnabled, inventoryLoading, meData, inventoryData]);
 
   useEffect(() => {
     if (debtorsData) {
