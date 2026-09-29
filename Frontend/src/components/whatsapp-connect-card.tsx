@@ -59,12 +59,25 @@ export function WhatsAppConnectCard({
           <Button className={bare ? "w-full" : "w-full sm:w-auto"} disabled>
             Preparing WhatsApp…
           </Button>
+        ) : setup?.wa_link ? (
+          // Real anchor, not window.open: Brave Shields and popup blockers
+          // can swallow window.open whole, leaving a dead click with zero
+          // feedback. A link click is never popup-blocked, and it degrades
+          // gracefully (long-press to copy, open in another app).
+          <Button asChild className={bare ? "w-full" : "w-full sm:w-auto"}>
+            <a href={setup.wa_link} target="_blank" rel="noreferrer">
+              <WhatsappLogo weight="bold" />
+              Continue on WhatsApp
+              <ArrowSquareOut className="size-4" />
+            </a>
+          </Button>
         ) : (
+          // No wa_link came back from setup: render disabled rather than a
+          // button that silently does nothing when tapped.
           <Button
             className={bare ? "w-full" : "w-full sm:w-auto"}
-            onClick={() => {
-              if (setup?.wa_link) window.open(setup.wa_link, "_blank");
-            }}
+            disabled
+            title="WhatsApp link unavailable — check your connection and retry"
           >
             <WhatsappLogo weight="bold" />
             Continue on WhatsApp
