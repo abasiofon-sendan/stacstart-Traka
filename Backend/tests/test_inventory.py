@@ -62,8 +62,8 @@ def test_create_product():
         "/inventory",
         json={
             "name": "Test Product",
-            "cost_price": 10000,  # whole minor units (kobo)
-            "selling_price": 15000,
+            "cost_price": 100.0,  # major units (naira); stored as minor
+            "selling_price": 150.0,
             "quantity": 10,
             "low_stock_threshold": 5
         }
@@ -71,6 +71,7 @@ def test_create_product():
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "Test Product"
+    assert data["cost_price"] == 100.0
     assert data["currency"] == "NGN"
     assert data["quantity"] == 10
     assert "id" in data

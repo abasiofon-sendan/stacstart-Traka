@@ -8,12 +8,19 @@ from app.transactions import models as tx_models
 from app.inventory import models as inv_models
 from app.debtors import models as debtor_models
 from app.accounts import models as acct_models
+from app.core.countries import to_major
+
+
+def _account_country(db: Session, account_id: str) -> tuple[str, str]:
+    acc = db.query(acct_models.Account).filter(
+        acct_models.Account.id == account_id).first()
+    if acc and acc.country and acc.currency:
+        return acc.country, acc.currency
+    return "NG", "NGN"
 
 
 def _account_currency(db: Session, account_id: str) -> str:
-    acc = db.query(acct_models.Account).filter(
-        acct_models.Account.id == account_id).first()
-    return acc.currency if acc and acc.currency else "NGN"
+    return _account_country(db, account_id)[1]
 
 
 # ─── Dashboard ───────────────────────────────────────────────────────────────
@@ -22,7 +29,9 @@ def get_dashboard(db: Session, account_id: str) -> dict:
     """
     Live dashboard totals — recomputed on every call so the frontend always
     gets up-to-date figures the moment a sale is confirmed.
+    Money is returned in major units (naira); storage stays in minor.
     """
+    country, currency = _account_country(db, account_id)
     today = datetime.now(timezone.utc)
     today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end   = today_start + timedelta(days=1)
@@ -70,17 +79,17 @@ def get_dashboard(db: Session, account_id: str) -> dict:
     )
 
     return {
-        # All-time cards shown on the main dashboard screen
-        "total_revenue":          total_revenue,
-        "total_profit":           total_profit,
-        "currency":               _account_currency(db, account_id),
+        # All-time cards shown on the main dashboard screen (major units)
+        "total_revenue":          to_major(total_revenue, country),
+        "total_profit":           to_major(total_profit, country),
+        "currency":               currency,
 
-        # Today's snapshot
-        "today_revenue":          today_revenue,
-        "today_profit":           today_profit,
+        # Today's snapshot (major units)
+        "today_revenue":          to_major(today_revenue, country),
+        "today_profit":           to_major(today_profit, country),
 
         # Debt & stock alert badges
-        "total_debt_outstanding": sum(d.amount for d in unpaid_debtors),
+        "total_debt_outstanding": to_major(sum(d.amount for d in unpaid_debtors), country),
         "unpaid_debtor_count":    len(unpaid_debtors),
         "low_stock_count":        low_stock_count,
     }
@@ -125,6 +134,7 @@ def _reconciled_sales(db: Session, account_id: str, start: datetime, end: dateti
 # ─── Weekly Report ────────────────────────────────────────────────────────────
 
 def get_weekly_report(db: Session, account_id: str) -> dict:
+    country, currency = _account_country(db, account_id)
     this_start, this_end = _week_bounds(0)
     last_start, last_end = _week_bounds(1)
 
@@ -157,7 +167,7 @@ def get_weekly_report(db: Session, account_id: str) -> dict:
         daily_buckets[dt.weekday()] += txn.amount
 
     daily_sales = [
-        {"day": day_labels[i], "amount": daily_buckets[i]}
+        {"day": day_labels[i], "amount": to_major(daily_buckets[i], country)}
         for i in range(7)
     ]
 
@@ -211,12 +221,12 @@ def get_weekly_report(db: Session, account_id: str) -> dict:
         "week_start":       this_start.date().isoformat(),
         "week_end":         (this_end - timedelta(days=1)).date().isoformat(),
 
-        # Cards
-        "revenue":          this_revenue,
+        # Cards (major units)
+        "revenue":          to_major(this_revenue, country),
         "revenue_change":   revenue_change,   # % vs last week, positive = up
-        "profit":           this_profit,
+        "profit":           to_major(this_profit, country),
         "profit_change":    profit_change,
-        "currency":         _account_currency(db, account_id),
+        "currency":         currency,
 
         # Chart data
         "daily_sales":      daily_sales,
@@ -226,6 +236,6 @@ def get_weekly_report(db: Session, account_id: str) -> dict:
         "low_stock_items":  low_stock_items,
 
         # Debtors section
-        "total_debt_outstanding": total_debt_outstanding,
+        "total_debt_outstanding": to_major(total_debt_outstanding, country),
         "unpaid_debtor_count":    len(unpaid_debtors),
     }

@@ -59,13 +59,13 @@ def test_create_debtor():
         "/debtors/new",
         json={
             "name": "John Doe",
-            "amount": 50000,  # whole minor units (kobo) = ₦500.00
+            "amount": 500.0,  # major units (naira); stored as minor
             "items_summary": "3x Peak Milk",
             "items": [
                 {
                     "product_name": "Peak Milk",
                     "qty": 3,
-                    "price": 16667
+                    "price": 166.67
                 }
             ]
         }
@@ -73,7 +73,7 @@ def test_create_debtor():
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "John Doe"
-    assert data["amount"] == 50000
+    assert data["amount"] == 500.0
     assert data["currency"] == "NGN"
     assert len(data["items"]) == 1
     assert data["items"][0]["product_name"] == "Peak Milk"

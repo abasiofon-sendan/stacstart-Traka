@@ -11,7 +11,7 @@ router = APIRouter(prefix="/simulation", tags=["simulation"])
 
 class TriggerTransferPayload(BaseModel):
     sender_name: str
-    simulated_amount: int  # whole minor units (kobo/cents/pesewas; UGX whole)
+    simulated_amount: float  # major units (naira); stored as minor
     virtual_account_target: str
 
 

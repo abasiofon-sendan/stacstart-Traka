@@ -3,24 +3,24 @@ from pydantic import BaseModel
 
 
 class DashboardResponse(BaseModel):
-    # All-time totals in whole minor units — the two main cards on the dashboard
-    total_revenue:          int
-    total_profit:           int
+    # All-time totals in major units (naira) — the two main cards on the dashboard
+    total_revenue:          float
+    total_profit:           float
     currency:               str
 
     # Today only
-    today_revenue:          int
-    today_profit:           int
+    today_revenue:          float
+    today_profit:           float
 
     # Badge counters
-    total_debt_outstanding: int
+    total_debt_outstanding: float
     unpaid_debtor_count:    int
     low_stock_count:        int
 
 
 class DailySalesEntry(BaseModel):
     day: str        # "M" | "T" | "W" | "T" | "F" | "S" | "S"
-    amount: int     # whole minor units
+    amount: float   # major units (naira)
 
 
 class FastestSellingProduct(BaseModel):
@@ -42,11 +42,11 @@ class WeeklyReportResponse(BaseModel):
     week_end: str
 
     # ── Revenue card ──────────────────────────────────────────────────────────
-    revenue: int                    # whole minor units
+    revenue: float                  # major units (naira)
     revenue_change: float           # +14.0  (% vs last week, negative = down)
 
     # ── Profit card ───────────────────────────────────────────────────────────
-    profit: int                     # whole minor units
+    profit: float                   # major units (naira)
     profit_change: float            # -2.0
     currency: str
 
@@ -60,5 +60,5 @@ class WeeklyReportResponse(BaseModel):
     low_stock_items: List[LowStockItem]
 
     # ── Debtors summary ───────────────────────────────────────────────────────
-    total_debt_outstanding: int
+    total_debt_outstanding: float  # major units (naira)
     unpaid_debtor_count: int

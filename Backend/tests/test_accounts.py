@@ -83,10 +83,13 @@ def test_signup_kenya_seeds():
             app.dependency_overrides[get_current_account_id] = saved
     assert me.status_code == 200
     assert me.json()["currency"] == "KES"
-    # seed catalogue stocked automatically in minor units + KES
+    # seed catalogue stocked automatically (major units in API, KES)
     assert products.status_code == 200
     assert len(products.json()) == 5
     assert all(p["currency"] == "KES" for p in products.json())
+    blue_band = [p for p in products.json() if p["name"] == "Blue Band 500g"][0]
+    assert blue_band["cost_price"] == 350.0
+    assert blue_band["selling_price"] == 390.0
 
 def test_signup_invalid_country():
     response = client.post(

@@ -25,14 +25,19 @@ def get_product(db: Session, product_id: str, account_id: str):
 
 def create_product(db: Session, product_in: schemas.ProductCreate, account_id: str):
     from app.accounts import models as acct_models
+    from app.core.countries import to_minor
 
     acc = db.query(acct_models.Account).filter(
         acct_models.Account.id == account_id).first()
+    country = acc.country if acc and acc.country else "NG"
     currency = acc.currency if acc and acc.currency else "NGN"
+    data = product_in.model_dump()
+    data["cost_price"] = to_minor(data["cost_price"], country)
+    data["selling_price"] = to_minor(data["selling_price"], country)
     db_product = models.Product(
         account_id=account_id,
         currency=currency,
-        **{k: v for k, v in product_in.model_dump().items()},
+        **data,
     )
     db.add(db_product)
     db.commit()
@@ -53,8 +58,17 @@ def create_product(db: Session, product_in: schemas.ProductCreate, account_id: s
     return db_product
 
 def update_product(db: Session, product_id: str, product_in: schemas.ProductUpdate, account_id: str):
+    from app.accounts import models as acct_models
+    from app.core.countries import to_minor
+
     product = get_product(db, product_id, account_id)
+    acc = db.query(acct_models.Account).filter(
+        acct_models.Account.id == account_id).first()
+    country = acc.country if acc and acc.country else "NG"
     update_data = product_in.model_dump(exclude_unset=True)
+    for key in ("cost_price", "selling_price"):
+        if key in update_data and update_data[key] is not None:
+            update_data[key] = to_minor(update_data[key], country)
     for key, value in update_data.items():
         setattr(product, key, value)
     

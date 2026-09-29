@@ -9,13 +9,19 @@ from app.inventory import models as inv_models
 from app.debtors import models as debtor_models
 from app.accounts import models as acct_models
 from app.activity.service import log_activity
-from app.core.countries import format_money
+from app.core.countries import format_money, to_major, to_minor
+
+
+def _account_country(db: Session, account_id: str) -> tuple[str, str]:
+    acc = db.query(acct_models.Account).filter(
+        acct_models.Account.id == account_id).first()
+    if acc and acc.country and acc.currency:
+        return acc.country, acc.currency
+    return "NG", "NGN"
 
 
 def _account_currency(db: Session, account_id: str) -> str:
-    acc = db.query(acct_models.Account).filter(
-        acct_models.Account.id == account_id).first()
-    return acc.currency if acc and acc.currency else "NGN"
+    return _account_country(db, account_id)[1]
 
 
 # ─── Read ────────────────────────────────────────────────────────────────────
@@ -53,12 +59,18 @@ def create_transaction(
     originate inside the API (such as debt settlement) rather than from an
     inbound gateway transfer, so the row is created already reconciled.
     """
+    country, currency = _account_country(db, account_id)
     txn = tx_models.Transaction(
         account_id=account_id,
         reference=f"TXN-{uuid.uuid4().hex[:10].upper()}",
         status="reconciled",
-        currency=transaction_in.currency or _account_currency(db, account_id),
-        **{k: v for k, v in transaction_in.model_dump().items() if k != "currency"},
+        amount=to_minor(transaction_in.amount, country),
+        profit=to_minor(transaction_in.profit, country),
+        currency=currency,
+        payment_method=transaction_in.payment_method,
+        transaction_type=transaction_in.transaction_type,
+        title=transaction_in.title,
+        details=transaction_in.details,
     )
     db.add(txn)
     db.commit()
@@ -228,10 +240,11 @@ def reconcile_as_debt(
     account_id: str,
     reference: str,
     debtor_id: str,
-    repayment_amount: int,
+    repayment_amount: float,
 ) -> tx_models.Transaction:
     """
     Maps an unallocated transaction to a debt repayment.
+    repayment_amount arrives in major units; ledger math stays in minor.
     Credits the debtor's outstanding balance and marks the debtor Paid when
     the balance reaches zero.
     """
@@ -248,7 +261,9 @@ def reconcile_as_debt(
     if not debtor:
         raise HTTPException(status_code=404, detail=f"Debtor '{debtor_id}' not found")
 
-    debtor.amount = max(0, debtor.amount - repayment_amount)
+    country, _ = _account_country(db, account_id)
+    repayment_minor = to_minor(repayment_amount, country)
+    debtor.amount = max(0, debtor.amount - repayment_minor)
     if debtor.amount == 0:
         debtor.status = "Paid"
 
@@ -256,7 +271,7 @@ def reconcile_as_debt(
     txn.transaction_type = "debt_repayment"
     txn.payment_method = txn.channel or "transfer"
     txn.title = f"Debt Repayment — {debtor.name}"
-    txn.details = (f"{format_money(repayment_amount, txn.currency)} "
+    txn.details = (f"{format_money(repayment_minor, txn.currency)} "
                    f"credited against outstanding balance")
     txn.profit = 0  # debt repayments carry no margin profit
 
@@ -268,7 +283,7 @@ def reconcile_as_debt(
         account_id=account_id,
         activity_type="debt_repayment_reconciled",
         title="Debt Repayment Reconciled",
-        description=(f"{format_money(repayment_amount, txn.currency)} "
+        description=(f"{format_money(repayment_minor, txn.currency)} "
                      f"credited to {debtor.name}"),
         event_metadata={
             "amount": repayment_amount,
