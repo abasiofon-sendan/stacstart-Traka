@@ -8,7 +8,8 @@ import { useAuthStore } from "./auth-store";
 import { useSessionStore } from "./session-store";
 import { useInventoryStore } from "./inventory-store";
 import { useDebtorsStore } from "./debtors-store";
-import { activeCountry, useCountryStore } from "./country-store";
+import { useCountryStore } from "./country-store";
+import { getCountry } from "@/lib/countries";
 import { toMoney, asCurrency } from "@/lib/money";
 import { seedCountryInventory } from "@/lib/seed";
 
@@ -92,10 +93,13 @@ export function StoreBootstrap({ children, pathname }: StoreBootstrapProps) {
     });
   }, [inventoryLoading, debtorsLoading, dashboardLoading]);
 
-  // Products carry their own currency from the API; debtors don't, so those
-  // fall back to the active country. Minor-unit amounts are derived here, at
-  // the one place server data enters the app.
-  const currency = activeCountry().currency.code;
+  // Subscribed rather than read via getState(): adoptCountry() above runs in
+  // an effect, and without a subscription this would keep the pre-/me country
+  // until something else happened to re-render us — converting debts with one
+  // country's scale while every display component formats in another's.
+  // Products and debtors also carry their own currency from the API, so this
+  // is only the fallback for payloads from before they did.
+  const currency = getCountry(useCountryStore((s) => s.code)).currency.code;
 
   useEffect(() => {
     if (inventoryData) {
@@ -132,19 +136,22 @@ export function StoreBootstrap({ children, pathname }: StoreBootstrapProps) {
   useEffect(() => {
     if (debtorsData) {
       useDebtorsStore.getState().replaceEntries(
-        debtorsData.debtors.map((d) => ({
-          id: d.id,
-          name: d.name,
-          amount: d.amount,
-          date: d.created_at.split("T")[0]!,
-          items: d.items.map((i) => ({
-            product_name: i.product_name,
-            qty: i.qty,
-            price: i.price,
-          })),
-          currency,
-          amountMinor: toMoney(d.amount, currency).minor,
-        })),
+        debtorsData.debtors.map((d) => {
+          const c = asCurrency(d.currency, currency);
+          return {
+            id: d.id,
+            name: d.name,
+            amount: d.amount,
+            date: d.created_at.split("T")[0]!,
+            items: d.items.map((i) => ({
+              product_name: i.product_name,
+              qty: i.qty,
+              price: i.price,
+            })),
+            currency: c,
+            amountMinor: toMoney(d.amount, c).minor,
+          };
+        }),
       );
     }
   }, [debtorsData, currency]);

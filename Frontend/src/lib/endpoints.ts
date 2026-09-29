@@ -91,6 +91,8 @@ export interface DebtorResponse {
   account_id: string;
   name: string;
   amount: number;
+  /** The currency `amount` is denominated in. */
+  currency: string;
   items_summary: string;
   due_date: string | null;
   status: string;
