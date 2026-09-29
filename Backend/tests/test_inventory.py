@@ -45,7 +45,8 @@ def setup_account():
         id="dummy-account-id",
         business_name="Dummy Business",
         phone_number="08000000000",
-        nin="NIN1234567",
+        country="NG",
+        currency="NGN",
         pin_hash="hashed_pin"
     )
     # Check if exists to avoid errors on multiple tests
@@ -61,7 +62,7 @@ def test_create_product():
         "/inventory",
         json={
             "name": "Test Product",
-            "cost_price": 100.0,
+            "cost_price": 100.0,  # major units (naira); stored as minor
             "selling_price": 150.0,
             "quantity": 10,
             "low_stock_threshold": 5
@@ -70,6 +71,8 @@ def test_create_product():
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "Test Product"
+    assert data["cost_price"] == 100.0
+    assert data["currency"] == "NGN"
     assert data["quantity"] == 10
     assert "id" in data
     return data["id"]

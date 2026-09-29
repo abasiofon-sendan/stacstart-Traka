@@ -34,13 +34,12 @@ app.dependency_overrides[get_db] = override_get_db
 client = TestClient(app)
 
 def test_signup():
-    test_nin = f"NIN{uuid.uuid4().hex[:10]}"
     response = client.post(
         "/accounts/signup",
         json={
             "business_name": "Test Business",
             "phone_number": "08012345678",
-            "nin": test_nin,
+            "country": "NG",
             "pin": "123456"
         }
     )
@@ -48,10 +47,61 @@ def test_signup():
     data = response.json()
     assert data["business_name"] == "Test Business"
     assert data["phone_number"] == "08012345678"
+    assert data["country"] == "NG"
+    assert data["currency"] == "NGN"
+    assert "nin" not in data
     assert "id" in data
     assert data["virtual_account_number"] == "8012345678"
     assert "access_token" in data
     assert "refresh_token" in data
+
+def test_signup_kenya_seeds():
+    phone = f"0712{uuid.uuid4().hex[:6]}"
+    response = client.post(
+        "/accounts/signup",
+        json={
+            "business_name": "Kenya Shop",
+            "phone_number": phone,
+            "country": "KE",
+            "pin": "123456"
+        }
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["currency"] == "KES"
+    # Other test modules override the auth dependency globally, so restore
+    # the real one temporarily to exercise the authed /accounts/me endpoint.
+    from app.accounts.service import get_current_account_id
+    saved = app.dependency_overrides.pop(get_current_account_id, None)
+    try:
+        me = client.get("/accounts/me",
+                        headers={"Authorization": f"Bearer {data['access_token']}"})
+        products = client.get("/inventory",
+                              headers={"Authorization": f"Bearer {data['access_token']}"})
+    finally:
+        if saved is not None:
+            app.dependency_overrides[get_current_account_id] = saved
+    assert me.status_code == 200
+    assert me.json()["currency"] == "KES"
+    # seed catalogue stocked automatically (major units in API, KES)
+    assert products.status_code == 200
+    assert len(products.json()) == 5
+    assert all(p["currency"] == "KES" for p in products.json())
+    blue_band = [p for p in products.json() if p["name"] == "Blue Band 500g"][0]
+    assert blue_band["cost_price"] == 350.0
+    assert blue_band["selling_price"] == 390.0
+
+def test_signup_invalid_country():
+    response = client.post(
+        "/accounts/signup",
+        json={
+            "business_name": "Nowhere Shop",
+            "phone_number": "08012345670",
+            "country": "XX",
+            "pin": "123456"
+        }
+    )
+    assert response.status_code == 400
 
 def test_signup_invalid_pin():
     response = client.post(
@@ -59,7 +109,7 @@ def test_signup_invalid_pin():
         json={
             "business_name": "Test Business 2",
             "phone_number": "08012345679",
-            "nin": "12345678901",
+            "country": "NG",
             "pin": "123" # Too short
         }
     )
@@ -68,13 +118,12 @@ def test_signup_invalid_pin():
 def test_login():
     # Setup - Signup first
     phone = f"08099{uuid.uuid4().hex[:6]}"
-    nin = f"NIN{uuid.uuid4().hex[:10]}"
     client.post(
         "/accounts/signup",
         json={
             "business_name": "Login Test Business",
             "phone_number": phone,
-            "nin": nin,
+            "country": "NG",
             "pin": "123456"
         }
     )

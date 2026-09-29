@@ -9,7 +9,8 @@ class Account(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     business_name = Column(String, nullable=False)
     phone_number = Column(String, unique=True, index=True, nullable=False)
-    nin = Column(String, unique=True, nullable=False)
+    country = Column(String, nullable=False, default="NG", index=True)
+    currency = Column(String(3), nullable=False, default="NGN")
     pin_hash = Column(String, nullable=False)
     virtual_account_number = Column(String, unique=True, nullable=True)
     

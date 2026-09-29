@@ -3,9 +3,10 @@ from pydantic import BaseModel
 
 
 class DashboardResponse(BaseModel):
-    # All-time totals — the two main cards on the dashboard
-    total_revenue:          float   # ₦94,500 — updates the moment Confirm is tapped
-    total_profit:           float   # ₦20,350
+    # All-time totals in major units (naira) — the two main cards on the dashboard
+    total_revenue:          float
+    total_profit:           float
+    currency:               str
 
     # Today only
     today_revenue:          float
@@ -19,7 +20,7 @@ class DashboardResponse(BaseModel):
 
 class DailySalesEntry(BaseModel):
     day: str        # "M" | "T" | "W" | "T" | "F" | "S" | "S"
-    amount: float
+    amount: float   # major units (naira)
 
 
 class FastestSellingProduct(BaseModel):
@@ -41,12 +42,13 @@ class WeeklyReportResponse(BaseModel):
     week_end: str
 
     # ── Revenue card ──────────────────────────────────────────────────────────
-    revenue: float                  # ₦194,500
+    revenue: float                  # major units (naira)
     revenue_change: float           # +14.0  (% vs last week, negative = down)
 
     # ── Profit card ───────────────────────────────────────────────────────────
-    profit: float                   # ₦40,350
+    profit: float                   # major units (naira)
     profit_change: float            # -2.0
+    currency: str
 
     # ── Daily Sales Pattern bar chart ─────────────────────────────────────────
     daily_sales: List[DailySalesEntry]   # 7 entries Mon→Sun
@@ -58,5 +60,5 @@ class WeeklyReportResponse(BaseModel):
     low_stock_items: List[LowStockItem]
 
     # ── Debtors summary ───────────────────────────────────────────────────────
-    total_debt_outstanding: float
+    total_debt_outstanding: float  # major units (naira)
     unpaid_debtor_count: int

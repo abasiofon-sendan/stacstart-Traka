@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 
 from app.reports.service import get_dashboard
 from app.debtors import models as debtor_models
+from app.accounts import models as acct_models
+from app.core.countries import format_money, get_country
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE    = "https://api.groq.com/openai/v1"
@@ -71,9 +73,18 @@ def groq_transcribe(audio_bytes: bytes, filename: str) -> dict:
     }
 
 
+def _account_country_currency(db: Session, account_id: str) -> tuple[str, str]:
+    acc = db.query(acct_models.Account).filter(
+        acct_models.Account.id == account_id).first()
+    if acc and acc.country and acc.currency:
+        return acc.country, acc.currency
+    return "NG", "NGN"
+
+
 # ─── Step 2: Build business context ──────────────────────────────────────────
 
 def _build_context(db: Session, account_id: str) -> str:
+    country, currency = _account_country_currency(db, account_id)
     dash = get_dashboard(db, account_id)
 
     unpaid = (
@@ -85,16 +96,16 @@ def _build_context(db: Session, account_id: str) -> str:
         .all()
     )
     debtor_lines = "\n".join(
-        f"  - {d.name}: ₦{d.amount:,.0f}" for d in unpaid
+        f"  - {d.name}: {format_money(d.amount, d.currency or currency)}" for d in unpaid
     ) or "  None"
 
     return f"""
 MERCHANT BUSINESS FACTS (live data):
-- Total Revenue (all-time): ₦{dash['total_revenue']:,.0f}
-- Net Profit (all-time):    ₦{dash['total_profit']:,.0f}
-- Revenue Today:            ₦{dash['today_revenue']:,.0f}
-- Profit Today:             ₦{dash['today_profit']:,.0f}
-- Total Debt Outstanding:   ₦{dash['total_debt_outstanding']:,.0f}
+- Total Revenue (all-time): {format_money(dash['total_revenue'], currency)}
+- Net Profit (all-time):    {format_money(dash['total_profit'], currency)}
+- Revenue Today:            {format_money(dash['today_revenue'], currency)}
+- Profit Today:             {format_money(dash['today_profit'], currency)}
+- Total Debt Outstanding:   {format_money(dash['total_debt_outstanding'], currency)}
 - Number of Unpaid Debtors: {dash['unpaid_debtor_count']}
 - Low Stock Items Count:    {dash['low_stock_count']}
 
@@ -112,10 +123,19 @@ def groq_advise(transcript: str, language: str, db: Session, account_id: str) ->
     """
     context      = _build_context(db, account_id)
     lang_instr   = _lang_instruction(language)
+    country, currency = _account_country_currency(db, account_id)
+    try:
+        cfg = get_country(country)
+        money_instr = (f"Money is in {cfg['name']} {cfg['currency']} "
+                       f"({cfg['symbol']}, subunit: {cfg['subunit']}).")
+        if cfg["decimals"] == 0:
+            money_instr += " Amounts are whole numbers only — no decimals."
+    except KeyError:
+        money_instr = "Money is in Nigerian naira (₦, subunit: kobo)."
 
     system_prompt = f"""You are Traka, a friendly business advisor for a Nigerian small shop owner.
 {lang_instr}
-Keep answers SHORT (2-4 sentences max). Use ₦ for naira amounts.
+Keep answers SHORT (2-4 sentences max). {money_instr}
 Never make up data — only use the facts below.
 
 {context}"""

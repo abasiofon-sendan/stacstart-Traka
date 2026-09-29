@@ -29,12 +29,19 @@ OPTIONAL_FIELDS = ("due_date", "items_summary")
 # ─── Normalisation helpers ─────────────────────────────────────────────
 
 def parse_amount(raw: object) -> Optional[float]:
-    """Coerce '5k', '5,000', '₦5000' etc. to float. Returns None if unparseable."""
+    """Coerce '5k', '5,000', '₦5000', '#50', 'KSh 200' etc. to float (major units).
+    Returns None if unparseable."""
     if isinstance(raw, (int, float)):
         return float(raw) if float(raw) > 0 else None
     if not isinstance(raw, str):
         return None
-    s = raw.strip().lower().replace("₦", "").replace("naira", "").replace("ngn", "").strip()
+    s = raw.strip().lower()
+    for token in ("₦", "#", "naira", "ngn", "kobo",
+                  "ksh", "kes", "kshs", "shillings", "shilingi", "shs",
+                  "gh₵", "ghc", "ghs", "cedi", "cedis", "pesewa", "pesewas",
+                  "ush", "ugx"):
+        s = s.replace(token, "")
+    s = s.strip()
     # 5k / 2.5k shorthand
     m = re.fullmatch(r"([\d,\.]+)\s*k", s)
     if m:
@@ -140,7 +147,7 @@ Return ONLY valid JSON with exactly these keys:
 
 Rules:
 - name: person owing. null if not mentioned.
-- amount: number in naira. Convert '5k'->5000, 'five thousand'->5000. null if not mentioned.
+- amount: number in the shop's local currency (naira/kobo, Kenyan shillings, cedis/pesewas, Ugandan shillings). Convert '5k'->5000, '#5000'->5000, 'N5k'->5000, 'five thousand'->5000, 'elufu tano'->5000. null if not mentioned.
 - items_summary: what was bought/collected, e.g. '2 bags of rice'. null if not mentioned.
 - due_date: when they will pay. Keep raw phrase ('Friday', 'tomorrow', '12/10') or ISO date. null if not mentioned.
 - confidence: 0-1 how sure you are about name+amount.
