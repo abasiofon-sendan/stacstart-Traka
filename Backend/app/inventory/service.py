@@ -118,13 +118,14 @@ _BATCH_PROMPT = (
     "If a photo is unreadable, use null for that position. No prose, no code fences."
 )
 
-_GEMINI_MODEL = os.getenv("GEMINI_VISION_MODEL", "gemini-3.8-flash")
-# Fallbacks only for retired models (404). Overload (503) fails fast so a
-# 3-image batch never stacks 4 slow attempts — the client should retry.
+_GEMINI_MODEL = os.getenv("GEMINI_VISION_MODEL", "gemini-3.5-flash")
+# Fallbacks for retired models (404) plus one transient-overload (503) retry.
+# Order prefers currently-responsive models; measured 2026-09: 3.5-flash ~2s.
 _GEMINI_FALLBACKS = (
+    "gemini-3.5-flash-lite",
     "gemini-3.7-flash",
-    "gemini-3.6-flash",
     "gemini-flash-latest",
+    "gemini-3.8-flash",
 )
 
 _MAX_DIM = 1024  # downscale phone photos before upload: faster + cheaper
