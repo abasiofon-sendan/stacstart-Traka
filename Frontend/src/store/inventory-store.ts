@@ -15,6 +15,8 @@ interface InventoryState {
   removeItem: (id: string) => void;
   /** Restore a snapshot after a failed optimistic mutation. */
   restoreItem: (item: InventoryItem) => void;
+  /** Drop all local stock (sign-out). */
+  clearInventory: () => void;
   manualCashSale: (prodId: string, qty: number) => Promise<void>;
   processTransfer: (prodId: string, qty: number, sender: string) => Promise<void>;
 }
@@ -40,6 +42,8 @@ export const useInventoryStore = create<InventoryState>()((set, get) => ({
         ? s.items.map((i) => (i.id === item.id ? item : i))
         : [...s.items, item],
     })),
+
+  clearInventory: () => set({ items: [] }),
 
   manualCashSale: async (prodId, qty) => {
     const item = get().items.find((i) => i.id === prodId);

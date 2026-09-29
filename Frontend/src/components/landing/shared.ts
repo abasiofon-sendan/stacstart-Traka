@@ -8,10 +8,9 @@ export function focusRing() {
 }
 
 export const NAV_LINKS = [
-  { label: "How it works", href: "#how" },
-  { label: "Live demo", href: "#demo" },
-  { label: "Traders", href: "#stories" },
-  { label: "FAQ", href: "#faq" },
+  { label: "How it works", href: "/#how" },
+  { label: "Features", href: "/features" },
+  { label: "FAQ", href: "/#faq" },
 ];
 
 export const LANGS = ["EN", "Pidgin", "Yoruba", "Hausa", "Swahili"] as const;
@@ -73,27 +72,31 @@ export interface Faq {
 
 export const FAQS: Faq[] = [
   {
-    q: "Do I need to stop collecting cash?",
-    a: "No. Keep selling exactly as you do today. Log each cash sale in seconds — it joins the same daily record as transfers.",
+    q: "Who is Traka for?",
+    a: "Owners of small shops and provision stores in Nigeria, Kenya, Uganda and Ghana. Many trade in local languages rather than formal English, and already use WhatsApp daily with cash, bank transfer or mobile money.",
   },
   {
-    q: "What happens when a customer sends a transfer?",
-    a: "They pay to your Traka store number. The payment matches itself to your record — no manual sorting, no screenshots to chase.",
+    q: "What problem does Traka solve?",
+    a: "Most small shops run on cash, credit and transfers nobody writes down. At day's end you can't say if you made a profit, you learn you're out of stock only when a customer asks, and you can't say exactly who owes you or how much.",
   },
   {
-    q: "How do I handle customers who buy now and pay later?",
-    a: "Log the sale under their name with what they took. Send them their payment link when ready — the moment they pay through it, Traka matches the payment and clears the debt itself. No marking, no chasing.",
+    q: "How do I record a sale?",
+    a: "Send a WhatsApp message like \"sold 2 bread, 1 milk\" and it becomes a sales record with updated stock and profit. Transfers into your store's virtual account are recorded the moment they arrive.",
   },
   {
-    q: "Which languages does the voice helper speak?",
-    a: "English, Pidgin, Yoruba, Hausa and Swahili. Type or hold the mic and ask about sales, debts or today’s close — it replies in your language, out loud.",
+    q: "How do credit sales and debts work?",
+    a: "Log a debt against a customer's name and it's repaid through a payment link, so you always know who owes what.",
   },
   {
-    q: "Do I need a smartphone or POS?",
-    a: "Any phone that runs the app works. No POS, no spreadsheet, no new machine to learn.",
+    q: "How does restock work?",
+    a: "Photograph your products and Traka builds the inventory from the photo.",
   },
   {
-    q: "Is Traka holding my money?",
-    a: "No. Money goes to your own store account. Traka only writes the record — sales, debts, daily close and weekly pattern.",
+    q: "Which languages can I use?",
+    a: "Ask by voice and hear a spoken answer in English, Pidgin, Hausa or Swahili, depending on your country. Pick your country at signup and the app sets the right currency, payment method and languages.",
+  },
+  {
+    q: "Will Traka get me a loan?",
+    a: "Not today. Over time these records can give you a history to show lenders — that's the roadmap, not a feature today.",
   },
 ];

@@ -40,7 +40,7 @@ function RootLayout() {
   const [aiOpen, setAiOpen] = useState(false);
   const [reportsOpen, setReportsOpen] = useState(false);
 
-  const isLanding = location.pathname === "/";
+  const isLanding = location.pathname === "/" || location.pathname === "/features";
   const isSandbox = location.pathname === "/sandbox";
   const isAuth =
     location.pathname === "/auth" ||
@@ -67,7 +67,7 @@ function RootLayout() {
   useEffect(() => {
     const onUnauthorized = () => {
       setAuthenticated(false);
-      if (location.pathname !== "/") {
+      if (location.pathname !== "/" && location.pathname !== "/features") {
         navigate({ to: "/auth", replace: true });
       }
     };

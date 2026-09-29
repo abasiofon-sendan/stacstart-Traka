@@ -27,9 +27,12 @@ export function LandingNav() {
     return () => m.removeEventListener("change", update);
   }, []);
   useEffect(() => {
-    const sections = NAV_LINKS.map((l) =>
-      document.getElementById(l.href.slice(1)),
-    ).filter((el): el is HTMLElement => el !== null);
+    const ids = NAV_LINKS.map((l) =>
+      l.href.includes("#") ? l.href.split("#")[1]! : null,
+    ).filter((id): id is string => id !== null);
+    const sections = ids
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
     if (sections.length === 0) return;
     const observer = new IntersectionObserver(
       (entries) => {
@@ -64,7 +67,6 @@ export function LandingNav() {
           )}
           aria-label="Back to top"
         >
-          <img src="/logo.svg" alt="Traka logo" className="h-8 w-8" />
           <span className="font-display text-xl font-bold tracking-tight">
             Traka
           </span>
@@ -75,7 +77,8 @@ export function LandingNav() {
           aria-label="Sections"
         >
           {NAV_LINKS.map((l) => {
-            const active = activeId === l.href;
+            const hash = l.href.includes("#") ? `#${l.href.split("#")[1]}` : null;
+            const active = hash !== null && activeId === hash;
             return (
               <a
                 key={l.href}

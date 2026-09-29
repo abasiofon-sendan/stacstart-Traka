@@ -1,44 +1,36 @@
 import { motion, useReducedMotion } from "motion/react";
-import { BookOpen, ChartLineUp, Wallet } from "@phosphor-icons/react";
+import { Bank, BookOpen, ChartLineUp, Package } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { ease } from "./shared";
-import { money } from "@/lib/money";
-import { activeCountry } from "@/store/country-store";
-import type { CountryConfig } from "@/lib/countries";
 
-const rows = (country: CountryConfig) => {
-  const demo = country.copy.demo;
-  return [
+const POINTS = [
   {
-    icon: Wallet,
+    icon: ChartLineUp,
+    tint: "bg-[#cceedd]",
+    title: "No idea of profit",
+    body: "Cash, credit, transfer — nothing written down.",
+  },
+  {
+    icon: Package,
     tint: "bg-[#ffe9af]",
-    panel: "bg-[#fff9e8]",
-    title: "Cash disappears by evening",
-    body: "You sold all day but can’t say what entered. Small leaks eat the profit before you reach home.",
-    proof: `${money(demo.dayTotal)} in · ${country.currency.symbol}? kept`,
+    title: "Stock surprises",
+    body: "You find out you're out of stock when a customer asks.",
   },
   {
     icon: BookOpen,
     tint: "bg-[#ffd9ca]",
-    panel: "bg-[#fff3ec]",
-    title: "“I go pay tomorrow” vanishes",
-    body: "Names in your head, figures on paper scraps. When tomorrow comes, the story changes.",
-    proof: `${country.copy.customerA} · ${money(demo.debtorOne)} · Friday?`,
+    title: "Debts unclear",
+    body: "You can't say who owes you, or how much.",
   },
   {
-    icon: ChartLineUp,
-    tint: "bg-[#cceedd]",
-    panel: "bg-[#eef7f1]",
-    title: "No proof when it matters",
-    body: "Family support, restock loans, bigger supply — everyone asks for records you don’t have.",
-    proof: "No record found",
+    icon: Bank,
+    tint: "bg-[#e4e0ff]",
+    title: "No proof for loans",
+    body: "No record to show a bank your business works.",
   },
 ];
-};
 
 export function LandingProblem() {
-  const country = activeCountry();
-  const ROWS = rows(country);
   const reduce = useReducedMotion();
 
   const fadeUp = (delay = 0) => ({
@@ -53,51 +45,33 @@ export function LandingProblem() {
       <motion.div {...fadeUp(0)} className="max-w-2xl">
         <p className="text-xs font-bold uppercase tracking-widest text-primary">The problem</p>
         <h2 className="mt-3 text-balance font-display text-[32px] font-extrabold leading-[1.15] tracking-tight md:text-[44px] md:leading-[1.2]">
-          The notebook fails. So does memory.
+          You&apos;re running a business you can&apos;t see.
         </h2>
       </motion.div>
-      <div className="mt-12 space-y-6">
-        {ROWS.map((r, i) => {
-          const fromLeft = i % 2 === 0;
-          return (
-            <motion.div
-              key={r.title}
-              initial={
-                reduce
-                  ? false
-                  : { opacity: 0, x: fromLeft ? -32 : 32, rotate: fromLeft ? -0.6 : 0.6 }
-              }
-              whileInView={{ opacity: 1, x: 0, rotate: 0 }}
-              viewport={{ once: true, amount: 0.28 }}
-              transition={{ duration: 0.6, delay: i * 0.1, ease }}
-              className={cn(
-                "grid items-center gap-6 rounded-2xl border border-border p-7 shadow-card md:grid-cols-12 md:p-10",
-                r.panel,
-              )}
-            >
-              <div className={cn("md:col-span-7", i % 2 === 1 && "md:order-2")}>
-                <span className={cn("inline-flex rounded-xl p-3", r.tint)}>
-                  <r.icon weight="fill" className="h-6 w-6 text-pine" />
-                </span>
-                <h3 className="mt-4 font-display text-2xl font-extrabold tracking-tight">{r.title}</h3>
-                <p className="mt-2 max-w-md leading-relaxed text-muted-foreground">{r.body}</p>
-              </div>
-              <div className={cn("md:col-span-5", i % 2 === 1 && "md:order-1")}>
-                <motion.div
-                  initial={reduce ? false : { opacity: 0, scale: 0.94 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={{ duration: 0.45, delay: 0.18 + i * 0.08, ease }}
-                  className="rounded-xl border border-border bg-white px-5 py-4 shadow-card"
-                >
-                  <p className="text-xs font-medium text-muted-foreground">Today, without Traka</p>
-                  <p className="mt-1 font-mono text-xl font-bold text-muted-foreground">{r.proof}</p>
-                </motion.div>
-              </div>
-            </motion.div>
-          );
-        })}
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {POINTS.map((p, i) => (
+          <motion.div
+            key={p.title}
+            {...fadeUp(i * 0.06)}
+            className="flex items-start gap-4 rounded-2xl border border-border bg-white p-5 shadow-card"
+          >
+            <span className={cn("inline-flex shrink-0 rounded-xl p-2.5", p.tint)}>
+              <p.icon weight="fill" className="h-5 w-5 text-pine" />
+            </span>
+            <span>
+              <span className="font-display text-lg font-extrabold tracking-tight">{p.title}</span>
+              <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">{p.body}</span>
+            </span>
+          </motion.div>
+        ))}
       </div>
+      <motion.div
+        {...fadeUp(0.1)}
+        className="mt-6 rounded-2xl border border-border bg-muted/60 px-5 py-4 text-sm leading-relaxed text-muted-foreground md:px-7 md:py-5 md:text-base"
+      >
+        <span className="font-semibold text-foreground">Nearly 40 million businesses like yours exist in Nigeria alone.</span>{" "}
+        Most, across Africa, run the same way: informal, and invisible on paper.
+      </motion.div>
     </section>
   );
 }

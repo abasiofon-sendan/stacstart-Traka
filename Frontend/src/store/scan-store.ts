@@ -20,6 +20,8 @@ interface ScanState {
   ) => void;
   commitBatch: () => Promise<void>;
   discardBatch: () => void;
+  /** Drop staged batch state and revoke preview URLs (sign-out). */
+  clearScan: () => void;
 }
 
 /** Transient batch-scan staging workflow (AI photo upload → edit → commit). */
@@ -129,4 +131,17 @@ export const useScanStore = create<ScanState>()((set, get) => ({
   },
 
   discardBatch: () => set({ stagedProducts: [], activeStagedIdx: 0 }),
+
+  clearScan: () => {
+    get().stagedProducts.forEach((p) => {
+      if (p.img.startsWith("blob:")) {
+        try {
+          URL.revokeObjectURL(p.img);
+        } catch {
+          /* ignore */
+        }
+      }
+    });
+    set({ stagedProducts: [], activeStagedIdx: 0, scanning: false });
+  },
 }));

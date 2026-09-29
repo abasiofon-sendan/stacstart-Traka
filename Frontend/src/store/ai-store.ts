@@ -23,6 +23,8 @@ interface AiState {
   setAiLang: (v: AiLanguage) => void;
   submitAiQuery: (text: string) => Promise<void>;
   submitAiVoice: (audio: Blob) => Promise<void>;
+  /** Drop chat history and revoke voice blob URLs (sign-out). */
+  clearAi: () => void;
 }
 
 function buildContext(): string {
@@ -110,6 +112,17 @@ export const useAiStore = create<AiState>()((set, get) => ({
     } finally {
       set({ aiLoading: false });
     }
+  },
+
+  clearAi: () => {
+    Object.values(get().chatAudioUrls).forEach((u) => {
+      try {
+        URL.revokeObjectURL(u);
+      } catch {
+        /* ignore */
+      }
+    });
+    set({ chatLogs: [], chatAudioUrls: {}, aiLoading: false });
   },
 }));
 

@@ -88,8 +88,7 @@ function SidebarBody({ onNavigate, onClose, onOpenReports, showReports, hidePrim
     <>
       {/* Brand */}
       <div className="flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5" aria-label="Traka — go home">
-          <img src="/logo.svg" alt="" className="h-7 w-7" />
+        <Link to="/" className="flex items-center" aria-label="Traka — go home">
           <span className="font-display text-lg font-extrabold tracking-tight text-foreground">
             Traka
           </span>
