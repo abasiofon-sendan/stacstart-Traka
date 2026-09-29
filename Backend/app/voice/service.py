@@ -17,6 +17,7 @@ GROQ_CHAT_MODEL = os.getenv("GROQ_CHAT_MODEL", "openai/gpt-oss-20b")
 _LANG_INSTRUCTIONS = {
     "yo": "Reply ONLY in Yoruba language.",
     "ha": "Reply ONLY in Hausa language.",
+    "sw": "Reply ONLY in Swahili (Kiswahili) language.",
     "en": "Reply in clear, friendly English.",
 }
 # Anything else (including "en-NG", "pcm", unknown) → Pidgin
