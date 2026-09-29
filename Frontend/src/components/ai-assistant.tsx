@@ -166,6 +166,11 @@ function AssistantBody({  onClose,
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const prevLogsLen = useRef(0);
+  // Log length when the drawer opened (the body remounts on every open).
+  // Only bot replies appended after this point animate — otherwise each
+  // open replays the typewriter on the last reply. State, not a ref: the
+  // value is read during render, where ref access is flagged.
+  const [openedAtLen] = useState(chatLogs.length);
   const audioRefs = useRef<Record<number, HTMLAudioElement>>({});
 
   useEffect(() => {
@@ -335,8 +340,12 @@ function AssistantBody({  onClose,
             const text = log.startsWith("bot:") ? log.slice(4) : log;
             // Only the freshest bot reply animates — anything above it is
             // history and renders in full, so sending a follow-up never
-            // replays an old animation.
-            const animate = log.startsWith("bot:") && i === chatLogs.length - 1;
+            // replays an old animation. And only replies that arrived while
+            // the drawer is open animate, so reopening never replays it.
+            const animate =
+              log.startsWith("bot:") &&
+              i === chatLogs.length - 1 &&
+              i >= openedAtLen;
             return (
               <div key={i}>
                 <div className="inline-block max-w-[85%] rounded-lg rounded-tl-none border border-border bg-secondary p-4 text-sm leading-relaxed text-foreground shadow-sm">
