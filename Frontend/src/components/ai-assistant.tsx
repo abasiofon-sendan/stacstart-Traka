@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   MagicWand,
   PaperPlaneRight,
@@ -15,6 +15,9 @@ import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import type { AiLanguage } from "@/lib/endpoints";
 import { speakReply, cancelSpeech, ensureAudioReady } from "@/lib/tts";
+import { useCountryStore } from "@/store/country-store";
+import { getCountry } from "@/lib/countries";
+import { PENDING_LANGUAGES } from "@/lib/endpoints";
 
 interface AiAssistantProps {
   open: boolean;
@@ -104,8 +107,47 @@ export function AiAssistant({
   );
 }
 
-function AssistantBody({
-  onClose,
+/**
+ * Word-by-word reveal for bot replies. The backend returns the whole reply at
+ * once (no streaming), so the animation happens purely at render: words are
+ * unveiled on a timer until the full text shows. Used only for the latest bot
+ * message — older ones render instantly.
+ */
+function TypewriterText({ text, onTick }: {
+  text: string;
+  onTick?: () => void;
+}) {
+  // Bot replies are append-only, so a fresh mount always starts at word one —
+  // no reset effect needed. `onTick` must be a stable useCallback or the
+  // timer restarts on every parent render.
+  const words = text.split(" ");
+  const [count, setCount] = useState(1);
+
+  const finished = count >= words.length;
+
+  useEffect(() => {
+    if (finished) return;
+    const t = setTimeout(() => {
+      setCount((c) => Math.min(c + 1, words.length));
+      onTick?.();
+    }, 28);
+    return () => clearTimeout(t);
+  }, [count, finished, words.length, onTick]);
+
+  return (
+    <>
+      {words.slice(0, count).join(" ")}
+      {!finished && (
+        <span
+          aria-hidden
+          className="ml-1 inline-block h-3.5 w-[2px] animate-pulse bg-primary align-baseline"
+        />
+      )}
+    </>
+  );
+}
+
+function AssistantBody({  onClose,
   aiLang,
   onSetAiLang,
   aiLoading,
@@ -116,6 +158,7 @@ function AssistantBody({
   onSubmitVoice,
 }: AssistantBodyProps) {
   const { toast } = useToast();
+  const country = getCountry(useCountryStore((s) => s.code));
   const [input, setInput] = useState("");
   const [recording, setRecording] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -199,6 +242,14 @@ function AssistantBody({
   const lastIsUser = !!lastLog && lastLog.startsWith("user:");
   const showTyping = aiLoading && lastIsUser;
 
+  // Stable identity matters: TypewriterText restarts its word timer whenever
+  // this changes, so it must not be re-created on every parent render.
+  const scrollToBottom = useCallback(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, []);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-5">
       {/* ── Header row ── */}
@@ -232,8 +283,8 @@ function AssistantBody({
       </div>
 
       {/* ── Language pills ── */}
-      <div className="mt-3 flex shrink-0 flex-wrap gap-1.5">
-        {LANGUAGES.map((lang) => (
+      <div className="mt-3 flex shrink-0 flex-wrap items-center gap-1.5">
+        {LANGUAGES.filter((l) => country.languages.includes(l.code)).map((lang) => (
           <Button
             key={lang.code}
             type="button"
@@ -245,6 +296,12 @@ function AssistantBody({
             {lang.label}
           </Button>
         ))}
+        {PENDING_LANGUAGES.includes(aiLang) && (
+          <span className="text-[10px] text-muted-foreground">
+            {LANGUAGES.find((l) => l.code === aiLang)?.label} coming soon — replying in
+            English for now
+          </span>
+        )}
       </div>
 
       {/* ── Dynamic scroll area ── */}
@@ -276,11 +333,19 @@ function AssistantBody({
               );
             }
             const text = log.startsWith("bot:") ? log.slice(4) : log;
+            // Only the freshest bot reply animates — anything above it is
+            // history and renders in full, so sending a follow-up never
+            // replays an old animation.
+            const animate = log.startsWith("bot:") && i === chatLogs.length - 1;
             return (
               <div key={i}>
                 <div className="inline-block max-w-[85%] rounded-lg rounded-tl-none border border-border bg-secondary p-4 text-sm leading-relaxed text-foreground shadow-sm">
                   <MagicWand weight="fill" className="mr-1.5 inline h-3.5 w-3.5 text-primary" />
-                  {text}
+                  {animate ? (
+                    <TypewriterText text={text} onTick={scrollToBottom} />
+                  ) : (
+                    text
+                  )}
                 </div>
               </div>
             );
