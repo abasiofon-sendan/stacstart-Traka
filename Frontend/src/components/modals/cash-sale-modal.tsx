@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/drawer";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import type { InventoryItem } from "@/store/types";
+import { useMoney } from "@/lib/money";
 
 interface BasketItem {
   prodId: string;
@@ -30,6 +31,7 @@ interface CashSaleModalProps {
 
 export function CashSaleModal({ open, onClose, inventory, onConfirm }: CashSaleModalProps) {
   const [basket, setBasket] = useState<BasketItem[]>([]);
+  const money = useMoney();
   const [prodId, setProdId] = useState(inventory[0]?.id ?? "");
   const [qty, setQty] = useState(1);
   const currentProdId = prodId || (inventory[0]?.id ?? "");
@@ -145,10 +147,10 @@ export function CashSaleModal({ open, onClose, inventory, onConfirm }: CashSaleM
                   <div key={b.prodId} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
                     <div>
                       <p className="text-xs font-bold">{item.name}</p>
-                      <p className="mt-0.5 text-[10px] text-muted-foreground">₦{item.selling.toLocaleString()} × {b.qty}</p>
+                      <p className="mt-0.5 text-[10px] text-muted-foreground">{money(item.selling)} × {b.qty}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-sm font-black">₦{(item.selling * b.qty).toLocaleString()}</span>
+                      <span className="font-mono text-sm font-black">{money((item.selling * b.qty))}</span>
                       <Button
                         type="button"
                         variant="ghost"
@@ -165,7 +167,7 @@ export function CashSaleModal({ open, onClose, inventory, onConfirm }: CashSaleM
               })}
               <div className="flex items-center justify-between rounded-xl border-2 border-border bg-card px-4 py-3">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total</span>
-                <span className="font-mono text-base font-black">₦{basketTotal.toLocaleString()}</span>
+                <span className="font-mono text-base font-black">{money(basketTotal)}</span>
               </div>
             </div>
           )}

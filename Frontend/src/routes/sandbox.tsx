@@ -3,6 +3,9 @@ import { Route as RootRoute } from "@/routes/__root";
 import { useState } from "react";
 import { ArrowLeft, Lightning, Bank, Globe } from "@phosphor-icons/react";
 import { primaryCta } from "@/lib/utils";
+import { useMoney } from "@/lib/money";
+import { useCountryStore } from "@/store/country-store";
+import { getCountry } from "@/lib/countries";
 
 const PRESETS = [
   { label: "Baba Tunde", amount: 12500, bank: "GTBank" },
@@ -11,6 +14,8 @@ const PRESETS = [
 
 function SandboxPage() {
   const navigate = useNavigate();
+  const money = useMoney();
+  const country = getCountry(useCountryStore((s) => s.code));
   const [sender, setSender] = useState("");
   const [amount, setAmount] = useState("");
   const [bank, setBank] = useState("");
@@ -20,7 +25,7 @@ function SandboxPage() {
     const channel = new BroadcastChannel("traka_demo_channel");
     channel.postMessage({ type: "INCOMING_TRANSFER", ...payload });
     channel.close();
-    setStatus(`Dispatched ₦${payload.amount.toLocaleString()} from ${payload.sender} (${payload.bank})`);
+    setStatus(`Dispatched ${money(payload.amount)} from ${payload.sender} (${payload.bank})`);
   };
 
   const sendPreset = (p: { label: string; amount: number; bank: string }) => {
@@ -72,7 +77,7 @@ function SandboxPage() {
               className={primaryCta + " flex-col items-start gap-1 px-4 py-3 text-left"}
             >
               <span className="text-sm font-bold">{p.label}</span>
-              <span className="font-mono text-lg font-black">₦{p.amount.toLocaleString()}</span>
+              <span className="font-mono text-lg font-black">{money(p.amount)}</span>
               <span className="text-[11px] font-medium text-white/80">{p.bank}</span>
             </button>
           ))}
@@ -95,7 +100,7 @@ function SandboxPage() {
             value={amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^0-9]/g, ""))}
             inputMode="numeric"
-            placeholder="Amount (₦)"
+            placeholder={`Amount (${country.currency.symbol})`}
             className="h-11 w-full rounded-xl border border-slate-200 px-3 font-mono text-sm outline-none focus:border-primary"
           />
           <input

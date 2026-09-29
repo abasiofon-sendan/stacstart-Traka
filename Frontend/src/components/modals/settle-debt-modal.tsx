@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/drawer";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import type { DebtorEntry } from "@/store/types";
+import { useMoney } from "@/lib/money";
 
 interface SettleDebtConfirmModalProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface SettleDebtConfirmModalProps {
 }
 
 export function SettleDebtConfirmModal({ open, onClose, target, onConfirm }: SettleDebtConfirmModalProps) {
+  const money = useMoney();
   if (!target) return null;
 
   const handleConfirm = () => {
@@ -45,7 +47,7 @@ export function SettleDebtConfirmModal({ open, onClose, target, onConfirm }: Set
           <div className="space-y-4 text-center">
             <p className="text-sm text-foreground">
               Mark <span className="font-bold">{target.name}</span>'s debt of{" "}
-              <span className="font-black text-destructive">₦{target.amount.toLocaleString()}</span>{" "}
+              <span className="font-black text-destructive">{money(target.amount)}</span>{" "}
               as paid?
             </p>
           </div>

@@ -10,12 +10,15 @@ import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ease } from "./shared";
+import { money } from "@/lib/money";
+import { activeCountry } from "@/store/country-store";
+import type { CountryConfig } from "@/lib/countries";
 
 function floatTransition(duration: number, delay = 0) {
   return { duration, delay, repeat: Infinity, ease: "easeInOut" as const };
 }
 
-const RING_ITEMS = [
+const ringItems = (country: CountryConfig) => { const demo = country.copy.demo; return [
   {
     key: "cash",
     className: "left-[4%] top-[30%]",
@@ -26,7 +29,7 @@ const RING_ITEMS = [
           <CurrencyNgn weight="fill" className="h-3 w-3 text-primary" />
           Cash · logged
         </p>
-        <p className="mt-0.5 font-mono text-sm font-bold">₦2,350</p>
+        <p className="mt-0.5 font-mono text-sm font-bold">{money(demo.cashSale)}</p>
       </div>
     ),
   },
@@ -41,7 +44,7 @@ const RING_ITEMS = [
           <Bank weight="fill" className="h-3 w-3" />
           Transfer · matched
         </p>
-        <p className="mt-0.5 font-mono text-sm font-bold">₦7,800</p>
+        <p className="mt-0.5 font-mono text-sm font-bold">{money(demo.transfer)}</p>
       </div>
     ),
   },
@@ -69,7 +72,7 @@ const RING_ITEMS = [
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-100">
           <BookOpen weight="fill" className="h-3.5 w-3.5 text-red-600" />
         </span>
-        <span className="text-[11px] font-bold">Chidi · ₦12,500</span>
+        <span className="text-[11px] font-bold">{country.copy.customerA} · {money(country.copy.demo.debtorOne)}</span>
       </div>
     ),
   },
@@ -96,15 +99,16 @@ const RING_ITEMS = [
     ),
   },
 ];
+};
 
-const MOBILE_ITEMS = [
+const mobileItems = (country: CountryConfig) => { const demo = country.copy.demo; return [
   {
     key: "m-cash",
     className: "right-[5%] top-[13%]",
     duration: 4.2,
     card: (
       <div className="rounded-lg border border-border bg-white px-2.5 py-1.5 shadow-card">
-        <p className="font-mono text-xs font-bold">₦2,350</p>
+        <p className="font-mono text-xs font-bold">{money(demo.cashSale)}</p>
       </div>
     ),
   },
@@ -115,13 +119,17 @@ const MOBILE_ITEMS = [
     delay: 0.5,
     card: (
       <div className="rounded-lg border border-border bg-white px-2.5 py-1.5 shadow-card">
-        <p className="text-[10px] font-bold">Chidi · ₦12,500</p>
+        <p className="text-[10px] font-bold">{country.copy.customerA} · {money(country.copy.demo.debtorOne)}</p>
       </div>
     ),
   },
 ];
+};
 
 export function LandingHero() {
+  const country = activeCountry();
+  const RING_ITEMS = ringItems(country);
+  const MOBILE_ITEMS = mobileItems(country);
   const navigate = useNavigate();
   const reduce = useReducedMotion();
 

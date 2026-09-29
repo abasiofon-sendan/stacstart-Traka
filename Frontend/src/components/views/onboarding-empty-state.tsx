@@ -1,8 +1,7 @@
 import { Package, ArrowRight } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-
-const QUICK_ITEMS = ["Peak Milk Tin", "Spaghetti Packet", "Loaf of Bread"];
+import { activeCountry } from "@/store/country-store";
 
 interface OnboardingEmptyStateProps {
   onAddProduct: (name?: string) => void;
@@ -10,6 +9,8 @@ interface OnboardingEmptyStateProps {
 
 export function OnboardingEmptyState({ onAddProduct }: OnboardingEmptyStateProps) {
   const navigate = useNavigate();
+  // Whatever the country actually stocks sells here, not a hardcoded naira list.
+  const quickItems = activeCountry().seedProducts.slice(0, 3).map((p) => p.name);
 
   const goAdd = (name?: string) => {
     onAddProduct(name);
@@ -55,7 +56,7 @@ export function OnboardingEmptyState({ onAddProduct }: OnboardingEmptyStateProps
           Quick start
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          {QUICK_ITEMS.map((item) => (
+          {quickItems.map((item) => (
             <Button
               key={item}
               type="button"

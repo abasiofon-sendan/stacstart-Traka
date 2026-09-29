@@ -2,6 +2,9 @@ import { motion, useReducedMotion } from "motion/react";
 import { Bank, ChatCircleText, Fingerprint } from "@phosphor-icons/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ease } from "./shared";
+import { money } from "@/lib/money";
+import { activeCountry } from "@/store/country-store";
+import type { CountryConfig } from "@/lib/countries";
 
 interface Step {
   n: string;
@@ -13,14 +16,16 @@ interface Step {
   dark?: boolean;
 }
 
-const STEPS: Step[] = [
+const steps = (country: CountryConfig): Step[] => {
+  const demo = country.copy.demo;
+  return [
   {
     n: "1",
     icon: Fingerprint,
     title: "Get your store number",
     body: "Sign up once and receive your own Traka store number. Share it with anyone who pays by transfer — every payment finds its way home.",
-    visualTitle: "7040 198 119",
-    visualBody: "Mama Blessing Stores · always on",
+    visualTitle: country.copy.storeNumber,
+    visualBody: `${country.sampleStore} · always on`,
     dark: true,
   },
   {
@@ -28,7 +33,7 @@ const STEPS: Step[] = [
     icon: ChatCircleText,
     title: "Sell as usual — we write it",
     body: "Cash? Log it in seconds. Transfer? It matches itself. Owe? Put their name and what they took. Nothing about how you sell has to change.",
-    visualTitle: "Cash ₦2,350 · Transfer ₦7,800 · Chidi ₦12,500",
+    visualTitle: `Cash ${money(demo.cashSale)} · ${country.payment.short} ${money(demo.transfer)} · ${country.copy.customerA} ${money(demo.debtorOne)}`,
     visualBody: "One record, three ways to pay",
   },
   {
@@ -36,10 +41,11 @@ const STEPS: Step[] = [
     icon: Bank,
     title: "Close the day with sense",
     body: "Evening comes, Traka tells you what remains after the day’s movement — then sends your summary where you already chat.",
-    visualTitle: "₦48,200",
+    visualTitle: money(demo.dayTotal),
     visualBody: "Shared on WhatsApp at 8:04pm",
   },
 ];
+};
 
 function StackStep({ step, index }: { step: Step; index: number }) {
   const reduce = useReducedMotion();
@@ -89,6 +95,8 @@ function StackStep({ step, index }: { step: Step; index: number }) {
 }
 
 export function LandingHow() {
+  const country = activeCountry();
+  const STEPS = steps(country);
   const reduce = useReducedMotion();
 
   const fadeUp = (delay = 0) => ({

@@ -4,8 +4,10 @@ import { ArrowLeft, ArrowRight, Quotes } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { STORIES, pad } from "@/lib/stories";
 import { ease } from "./shared";
+import { activeCountry } from "@/store/country-store";
 
 export function LandingStories() {
+  const country = activeCountry();
   const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -36,7 +38,7 @@ export function LandingStories() {
         <motion.div {...fadeUp(0.08)} className="mt-10 overflow-hidden rounded-[2rem] bg-pine text-white">
           <div className="grid min-h-[380px] p-6 md:p-12 lg:grid-cols-12">
             <div className="col-span-12 flex items-center justify-between text-xs font-bold uppercase tracking-widest text-white/60">
-              <span>Field notes · Lagos</span>
+              <span>Field notes · {country.copy.market}</span>
               <span>{pad(index + 1)} / {pad(STORIES.length)}</span>
             </div>
             <div className="flex flex-col lg:col-span-8">

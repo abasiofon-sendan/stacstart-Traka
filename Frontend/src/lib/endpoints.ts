@@ -5,6 +5,11 @@ import { api } from "./api";
 export interface AccountCreate {
   business_name: string;
   phone_number: string;
+  /**
+   * Server-side market. The backend defaults this to NG, so sending it is not
+   * optional — omit it and a Kenyan merchant is stored as Nigeria/NGN.
+   */
+  country: string;
   pin: string;
 }
 
@@ -24,6 +29,8 @@ export interface AccountResponse {
   id: string;
   business_name: string;
   phone_number: string;
+  country: string;
+  currency: string;
   virtual_account_number: string | null;
   access_token: string;
   refresh_token: string;
@@ -199,6 +206,10 @@ export interface AccountMeResponse {
   id: string;
   business_name: string;
   phone_number: string;
+  /** The account's real market — server truth, wins over localStorage. */
+  country: string;
+  /** Currency derived from `country` by the backend. */
+  currency: string;
   /** Null until a receiving-account provider provisions one. */
   virtual_account_number: string | null;
 }
@@ -219,16 +230,7 @@ export interface WhatsAppStatusResponse {
 
 export const accountsApi = {
   signup: (data: AccountCreate) =>
-    api
-      .post<TokenResponse>("/accounts/signup", {
-        ...data,
-        // Shim: the backend still declares `nin` as required and rejects
-        // duplicates. We no longer ask merchants for one, so send a stable
-        // placeholder derived from the (already unique) phone number. FastAPI
-        // ignores unknown fields, so this is a no-op once the backend drops it.
-        nin: `TRAKA-${data.phone_number}`,
-      })
-      .then((r) => r.data),
+    api.post<TokenResponse>("/accounts/signup", data).then((r) => r.data),
 
   login: (data: AccountLogin) =>
     api.post<TokenResponse>("/accounts/login", data).then((r) => r.data),
@@ -343,6 +345,22 @@ export const reportsApi = {
 
 export type AiLanguage = "en" | "yo" | "ha" | "pidgin" | "sw";
 
+/**
+ * `/voice/ask/text` types `language` as a Literal of these four, so anything
+ * else comes back 422. Swahili is offered in the UI (Kenya) but answered in
+ * English until the backend adds it — see the note shown under the picker.
+ */
+export const BACKEND_LANGUAGES = ["en", "yo", "ha", "pidgin"] as const;
+
+/** Selectable in the UI but not yet answerable by the backend. */
+export const PENDING_LANGUAGES: AiLanguage[] = ["sw"];
+
+export function toApiLanguage(language: AiLanguage): (typeof BACKEND_LANGUAGES)[number] {
+  return (BACKEND_LANGUAGES as readonly string[]).includes(language)
+    ? (language as (typeof BACKEND_LANGUAGES)[number])
+    : "en";
+}
+
 export interface AdvisorResponse {
   transcript: string;
   language_detected: string;
@@ -352,7 +370,10 @@ export interface AdvisorResponse {
 export const voiceApi = {
   askText: (question: string, language: AiLanguage) =>
     api
-      .post<AdvisorResponse>("/voice/ask/text", { question, language })
+      .post<AdvisorResponse>("/voice/ask/text", {
+        question,
+        language: toApiLanguage(language),
+      })
       .then((r) => r.data),
 
   askVoice: (audio: Blob, context?: string) => {

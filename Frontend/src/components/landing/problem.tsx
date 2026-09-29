@@ -2,15 +2,20 @@ import { motion, useReducedMotion } from "motion/react";
 import { BookOpen, ChartLineUp, Wallet } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { ease } from "./shared";
+import { money } from "@/lib/money";
+import { activeCountry } from "@/store/country-store";
+import type { CountryConfig } from "@/lib/countries";
 
-const ROWS = [
+const rows = (country: CountryConfig) => {
+  const demo = country.copy.demo;
+  return [
   {
     icon: Wallet,
     tint: "bg-[#ffe9af]",
     panel: "bg-[#fff9e8]",
     title: "Cash disappears by evening",
     body: "You sold all day but can’t say what entered. Small leaks eat the profit before you reach home.",
-    proof: "₦48,200 in · ₦? kept",
+    proof: `${money(demo.dayTotal)} in · ${country.currency.symbol}? kept`,
   },
   {
     icon: BookOpen,
@@ -18,7 +23,7 @@ const ROWS = [
     panel: "bg-[#fff3ec]",
     title: "“I go pay tomorrow” vanishes",
     body: "Names in your head, figures on paper scraps. When tomorrow comes, the story changes.",
-    proof: "Chidi · ₦12,500 · Friday?",
+    proof: `${country.copy.customerA} · ${money(demo.debtorOne)} · Friday?`,
   },
   {
     icon: ChartLineUp,
@@ -29,8 +34,11 @@ const ROWS = [
     proof: "No record found",
   },
 ];
+};
 
 export function LandingProblem() {
+  const country = activeCountry();
+  const ROWS = rows(country);
   const reduce = useReducedMotion();
 
   const fadeUp = (delay = 0) => ({

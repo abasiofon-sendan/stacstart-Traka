@@ -1,19 +1,21 @@
 import { Input } from "@/components/ui/input";
+import type { CountryConfig } from "@/lib/countries";
 
-interface PhoneInputProps {  id?: string;
-  /** Local 10-digit number without the leading zero (prefix shown decoratively). */
+interface PhoneInputProps {
+  id?: string;
+  /** Local number without the leading zero (prefix shown decoratively). */
   value: string;
   onValueChange: (digits: string) => void;
-  placeholder?: string;
+  country: CountryConfig;
   autoComplete?: string;
 }
 
-/** Phone field with a decorative +234 prefix, per the register reference. */
+/** Phone field with the active country's flag and dial code. */
 export function PhoneInput({
   id,
   value,
   onValueChange,
-  placeholder = "801 234 5678",
+  country,
   autoComplete,
 }: PhoneInputProps) {
   return (
@@ -22,18 +24,21 @@ export function PhoneInput({
         aria-hidden
         className="mr-2.5 shrink-0 select-none border-r border-border pr-2.5 font-mono text-sm text-muted-foreground"
       >
-        +234
+        <span className="mr-1.5">{country.flag}</span>
+        {country.phone.dial}
       </span>
       <Input
         id={id}
         type="tel"
         inputMode="numeric"
         autoComplete={autoComplete}
-        placeholder={placeholder}
-        maxLength={10}
+        placeholder={country.phone.example}
+        maxLength={country.phone.localDigits}
         value={value}
         onChange={(e) =>
-          onValueChange(e.target.value.replace(/\D/g, "").slice(0, 10))
+          onValueChange(
+            e.target.value.replace(/\D/g, "").slice(0, country.phone.localDigits),
+          )
         }
         className="h-full min-w-0 flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:border-0 focus-visible:ring-0 aria-invalid:ring-0"
       />

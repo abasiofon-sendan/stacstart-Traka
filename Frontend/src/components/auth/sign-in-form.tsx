@@ -6,7 +6,10 @@ import { accountsApi } from "@/lib/endpoints";
 import { getErrorMessage } from "@/lib/utils";
 import { Field } from "./field";
 import { PhoneInput } from "./phone-input";
-import { isValidLocalPhone, toStoredPhone } from "@/lib/phone";
+import { CountrySelect } from "./country-select";
+import { isValidLocalPhone, toStoredPhone, formatPhone } from "@/lib/phone";
+import { useCountryStore } from "@/store/country-store";
+import { allDemoAccounts, getCountry, type CountryCode } from "@/lib/countries";
 import { PinInput } from "./pin-input";
 import { AuthFooter } from "./auth-footer";
 import { Card } from "@/components/ui/card";
@@ -15,25 +18,25 @@ interface SignInFormProps {
   onAuthenticate: () => void;
 }
 
-/* Placeholder demo accounts (Guild-style one-tap login rows).
-   TODO: replace with real backend demo credentials before launch. */
+/* Demo rows are one-tap logins. Tapping one also switches the app to that
+   store's country, so the ledger renders in the right currency immediately. */
 const DEMO_PIN = "123456";
-const DEMO_ACCOUNTS = [
-  { phone: "08100000001", name: "Mama Blessing", role: "Foodstuff" },
-  { phone: "08100000002", name: "Adaeze", role: "Fashion" },
-  { phone: "08100000003", name: "Tunde", role: "Provisions" },
-] as const;
+const DEMO_ACCOUNTS = allDemoAccounts();
 
 export function SignInForm({ onAuthenticate }: SignInFormProps) {
   const { toast } = useToast();
+  const countryCode = useCountryStore((s) => s.code);
+  const setCountry = useCountryStore((s) => s.setCountry);
+  const country = getCountry(countryCode);
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const canLogin = isValidLocalPhone(phone) && pin.length === 6;
+  const canLogin = isValidLocalPhone(phone, country) && pin.length === 6;
 
-  const fillDemo = (demoPhone: string) => {
+  const fillDemo = (demoPhone: string, demoCountry: CountryCode) => {
+    setCountry(demoCountry);
     setPhone(demoPhone.replace(/^0/, ""));
     setPin(DEMO_PIN);
     setError("");
@@ -41,10 +44,10 @@ export function SignInForm({ onAuthenticate }: SignInFormProps) {
 
   const handleLogin = async () => {
     if (!canLogin) {
-      if (phone && !isValidLocalPhone(phone)) {
+      if (phone && !isValidLocalPhone(phone, country)) {
         toast({
           title: "Invalid Phone Number",
-          description: "Enter a valid Nigerian number starting with 070, 080, or 090.",
+          description: `Enter a valid ${country.name} number. ${country.phone.helper}`,
           variant: "destructive",
         });
       }
@@ -57,12 +60,14 @@ export function SignInForm({ onAuthenticate }: SignInFormProps) {
         phone_number: toStoredPhone(phone),
         pin,
       });
+      setCountry(country.code);
       localStorage.setItem(
         "traka_user",
         JSON.stringify({
           token: res.access_token,
           refreshToken: res.refresh_token,
           virtualAccountNumber: res.virtual_account_number,
+          country: country.code,
           createdAt: new Date().toISOString(),
         }),
       );
@@ -97,14 +102,30 @@ export function SignInForm({ onAuthenticate }: SignInFormProps) {
         }}
       >
         <Field
+          label="Country"
+          htmlFor="signin-country"
+          helper="Your currency and payment method follow this. Or tap a demo store below to switch."
+        >
+          <CountrySelect
+            id="signin-country"
+            value={countryCode}
+            onChange={(c) => {
+              setCountry(c);
+              setPhone("");
+            }}
+          />
+        </Field>
+
+        <Field
           label="Phone number"
           htmlFor="signin-phone"
-          helper="We'll use this number to sign you in."
+          helper={`${country.phone.helper} We'll use this number to sign you in.`}
         >
           <PhoneInput
             id="signin-phone"
             value={phone}
             onValueChange={setPhone}
+            country={country}
             autoComplete="tel"
           />
         </Field>
@@ -132,7 +153,7 @@ export function SignInForm({ onAuthenticate }: SignInFormProps) {
 
       <Card className="mt-6">
         <div className="flex items-center justify-between px-4">
-          <p className="text-sm font-semibold">Demo accounts</p>
+          <p className="text-sm font-semibold">Demo stores</p>
           <p className="font-mono text-xs text-muted-foreground">
             PIN {DEMO_PIN}
           </p>
@@ -140,19 +161,25 @@ export function SignInForm({ onAuthenticate }: SignInFormProps) {
         <div className="mt-3 divide-y divide-border border-t border-border">
           {DEMO_ACCOUNTS.map((a) => (
             <Button
-              key={a.phone}
+              key={`${a.country.code}-${a.phone}`}
               type="button"
               variant="ghost"
-              onClick={() => fillDemo(a.phone)}
-              className="h-auto w-full justify-between px-4 py-3 text-left"
+              onClick={() => fillDemo(a.phone, a.country.code)}
+              className="h-auto w-full justify-between gap-3 px-4 py-3 text-left"
             >
-              <span>
-                <span className="block text-sm font-semibold">{a.phone}</span>
-                <span className="block text-xs text-muted-foreground">
-                  {a.name}
+              <span className="min-w-0">
+                <span className="flex items-center gap-2">
+                  <span aria-hidden>{a.country.flag}</span>
+                  <span className="truncate text-sm font-semibold">{a.store}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {a.country.name}
+                  </span>
+                </span>
+                <span className="mt-0.5 block font-mono text-xs text-muted-foreground">
+                  {formatPhone(a.phone, a.country)}
                 </span>
               </span>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              <span className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                 {a.role}
               </span>
             </Button>

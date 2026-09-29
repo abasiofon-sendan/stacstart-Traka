@@ -4,6 +4,8 @@ import { notify } from "./notify";
 import { getErrorMessage } from "@/lib/utils";
 import { useInventoryStore } from "./inventory-store";
 import { useDebtorsStore } from "./debtors-store";
+import { money } from "@/lib/money";
+import { activeCountry } from "./country-store";
 
 const AI_CHIPS: Record<AiLanguage, string[]> = {
   en: ["Who is owing me?", "How much profit today?", "Inventory Summary"],
@@ -27,9 +29,9 @@ function buildContext(): string {
   const items = useInventoryStore.getState().items;
   const entries = useDebtorsStore.getState().entries;
   const productList = items
-    .map((i) => `${i.name} (stock: ${i.qty}, price: ₦${i.selling})`)
+    .map((i) => `${i.name} (stock: ${i.qty}, price: ${money(i.selling)})`)
     .join("; ");
-  const debtorList = entries.map((d) => `${d.name} (owes: ₦${d.amount})`).join("; ");
+  const debtorList = entries.map((d) => `${d.name} (owes: ${money(d.amount)})`).join("; ");
   const parts: string[] = [];
   if (productList) parts.push(`Products in stock: ${productList}.`);
   if (debtorList) parts.push(`Debtors: ${debtorList}.`);
@@ -40,7 +42,8 @@ function buildContext(): string {
 export const useAiStore = create<AiState>()((set, get) => ({
   chatLogs: [],
   chatAudioUrls: {},
-  aiLang: "en",
+  // Kenya merchants start in Swahili; everyone else on the country's default.
+  aiLang: activeCountry().defaultLanguage,
   aiLoading: false,
 
   setAiLang: (aiLang) => set({ aiLang }),

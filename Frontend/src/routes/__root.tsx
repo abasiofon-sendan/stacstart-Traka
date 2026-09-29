@@ -16,6 +16,7 @@ import { useUiStore } from "@/store/ui-store";
 import { useWeeklyReport, useNotifications } from "@/lib/query-hooks";
 import { useToast } from "@/components/ui/toast";
 import { playChime } from "@/lib/sound";
+import { money } from "@/lib/money";
 
 function RootLayout() {
   const authenticated = useAuthStore((s) => s.authenticated);
@@ -89,8 +90,8 @@ function RootLayout() {
       const bank = String(data.bank ?? "Unknown Bank");
       playChime();
       toast({
-        title: "Transfer Alert",
-        description: `₦${amount.toLocaleString()} received from ${sender}!`,
+        title: "Payment Alert",
+        description: `${money(amount)} received from ${sender}!`,
         variant: "default",
       });
       receiveIncomingTransfer({ amount, sender, bank });

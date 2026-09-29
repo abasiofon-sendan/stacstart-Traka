@@ -16,6 +16,7 @@ import {
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import type { InventoryItem } from "@/store/types";
 import type { CreditBasketItem, DebtorItem } from "@/store/types";
+import { useMoney } from "@/lib/money";
 
 interface LogDebtModalProps {
   open: boolean;
@@ -25,6 +26,7 @@ interface LogDebtModalProps {
 }
 
 export function LogDebtModal({ open, onClose, onConfirm, inventory }: LogDebtModalProps) {
+  const money = useMoney();
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -168,7 +170,7 @@ export function LogDebtModal({ open, onClose, onConfirm, inventory }: LogDebtMod
                   <SelectContent>
                   {inventory.map((p) => (
                     <SelectItem key={p.id} value={String(p.id)}>
-                      {p.name} — ₦{p.selling.toLocaleString()}
+                      {p.name} — {money(p.selling)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -217,12 +219,12 @@ export function LogDebtModal({ open, onClose, onConfirm, inventory }: LogDebtMod
                           {item.qty}× {item.product_name}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          ₦{item.unit_price.toLocaleString()} each
+                          {money(item.unit_price)} each
                         </p>
                       </div>
                       <div className="flex items-center gap-2 ml-2 shrink-0">
                         <span className="font-black text-destructive text-[11px]">
-                          ₦{(item.unit_price * item.qty).toLocaleString()}
+                          {money((item.unit_price * item.qty))}
                         </span>
                         <Button
                           type="button"
@@ -245,7 +247,7 @@ export function LogDebtModal({ open, onClose, onConfirm, inventory }: LogDebtMod
                     Total Credit Value
                   </span>
                   <span className="text-sm font-black text-destructive">
-                    ₦{totalAmount.toLocaleString()}
+                    {money(totalAmount)}
                   </span>
                 </div>
               </div>
@@ -268,7 +270,7 @@ export function LogDebtModal({ open, onClose, onConfirm, inventory }: LogDebtMod
             disabled={creditBasket.length === 0}
             className="w-full py-3 text-xs font-bold uppercase tracking-wider"
           >
-            Log Transaction — ₦{totalAmount.toLocaleString()}
+            Log Transaction — {money(totalAmount)}
           </Button>
         </div>
     </ResponsiveDialog>

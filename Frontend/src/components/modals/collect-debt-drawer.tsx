@@ -7,6 +7,7 @@ import {
 import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import type { DebtorEntry } from "@/store/types";
+import { useMoney } from "@/lib/money";
 
 interface CollectDebtDrawerProps {
   open: boolean;
@@ -28,6 +29,7 @@ export function CollectDebtDrawer({
   accountName,
   onRemind,
 }: CollectDebtDrawerProps) {
+  const money = useMoney();
   const [copiedSummary, setCopiedSummary] = useState(false);
   const [reminderSet, setReminderSet] = useState(false);
 
@@ -38,16 +40,16 @@ export function CollectDebtDrawer({
       ? target.items.map((i) => `${i.qty}× ${i.product_name}`).join(", ")
       : "recent purchases";
 
-  const reminderTitle = `Collect ₦${target.amount.toLocaleString()} from ${target.name}`;
+  const reminderTitle = `Collect ${money(target.amount)} from ${target.name}`;
   const reminderMessage =
-    `${target.name} owes ₦${target.amount.toLocaleString()} for ${itemizedStr}. ` +
+    `${target.name} owes ${money(target.amount)} for ${itemizedStr}. ` +
     `Payment due: ${target.date}. Your account: ${accountNumber} (${accountName}).`;
 
   const handleCopySummary = async () => {
     const fullSummary =
       `DEBT REMINDER\n` +
       `Customer: ${target.name}\n` +
-      `Amount: ₦${target.amount.toLocaleString()}\n` +
+      `Amount: ${money(target.amount)}\n` +
       `Items: ${itemizedStr}\n` +
       `Due: ${target.date}\n` +
       `Collect to: ${accountNumber} (${accountName})`;
@@ -107,7 +109,7 @@ export function CollectDebtDrawer({
               </p>
               <p className="mt-1 font-bold text-foreground">{target.name}</p>
               <p className="mt-0.5 text-sm font-black text-destructive">
-                ₦{target.amount.toLocaleString()}
+                {money(target.amount)}
               </p>
             </div>
 
@@ -125,7 +127,7 @@ export function CollectDebtDrawer({
                         {item.qty}× {item.product_name}
                       </span>
                       <span className="font-bold text-foreground text-[11px]">
-                        ₦{(item.price * item.qty).toLocaleString()}
+                        {money((item.price * item.qty))}
                       </span>
                     </div>
                   ))}
@@ -178,7 +180,7 @@ export function CollectDebtDrawer({
               </p>
               <p className="text-[11px] leading-relaxed text-muted-foreground">
                 Tap "Remind Me" below so you don't forget. When {target.name} comes by,
-                collect ₦{target.amount.toLocaleString()} and mark the debt as settled
+                collect {money(target.amount)} and mark the debt as settled
                 from your Debtors page.
               </p>
             </div>

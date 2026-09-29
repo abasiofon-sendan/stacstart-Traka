@@ -8,6 +8,9 @@ import { useAuthStore } from "./auth-store";
 import { useSessionStore } from "./session-store";
 import { useInventoryStore } from "./inventory-store";
 import { useDebtorsStore } from "./debtors-store";
+import { activeCountry } from "./country-store";
+import { toMoney } from "@/lib/money";
+import { seedCountryInventory } from "@/lib/seed";
 
 // Routes that render no app data. /auth/whatsapp is the post-signup step —
 // it polls its own /accounts/whatsapp-status but must not pull the whole
@@ -81,6 +84,11 @@ export function StoreBootstrap({ children, pathname }: StoreBootstrapProps) {
     });
   }, [inventoryLoading, debtorsLoading, dashboardLoading]);
 
+  // The backend has no currency column yet, so records pick up the active
+  // country's code and its whole-minor-unit amount here, at the one place
+  // server data enters the app.
+  const currency = activeCountry().currency.code;
+
   useEffect(() => {
     if (inventoryData) {
       useInventoryStore.getState().replaceItems(
@@ -90,10 +98,20 @@ export function StoreBootstrap({ children, pathname }: StoreBootstrapProps) {
           qty: p.quantity,
           cost: p.cost_price,
           selling: p.selling_price,
+          currency,
+          costMinor: toMoney(p.cost_price, currency).minor,
+          sellingMinor: toMoney(p.selling_price, currency).minor,
         })),
       );
     }
-  }, [inventoryData]);
+  }, [inventoryData, currency]);
+
+  // A brand-new store lands on an empty ledger otherwise. Only fires once per
+  // account+country, and only when the inventory is genuinely empty.
+  useEffect(() => {
+    if (!appDataEnabled || inventoryLoading) return;
+    void seedCountryInventory(inventoryData?.length ?? 0);
+  }, [appDataEnabled, inventoryLoading, inventoryData?.length]);
 
   useEffect(() => {
     if (debtorsData) {
@@ -108,10 +126,12 @@ export function StoreBootstrap({ children, pathname }: StoreBootstrapProps) {
             qty: i.qty,
             price: i.price,
           })),
+          currency,
+          amountMinor: toMoney(d.amount, currency).minor,
         })),
       );
     }
-  }, [debtorsData]);
+  }, [debtorsData, currency]);
 
   return <>{children}</>;
 }
