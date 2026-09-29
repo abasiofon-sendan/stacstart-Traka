@@ -5,7 +5,12 @@ from sqlalchemy.orm import Session
 from app.webhooks.service import ingest_settlement
 
 
-def trigger_transfer(db: Session, sender_name: str, simulated_amount: float, virtual_account_target: str) -> dict:
+def trigger_transfer(db: Session, sender_name: str, simulated_amount: int, virtual_account_target: str) -> dict:
+    """
+    Builds a Paystack-mirrored webhook payload and routes it internally through
+    the shared webhook ingestion logic, bypassing HMAC signature verification.
+    simulated_amount is in whole minor units (kobo/cents/pesewas; UGX whole).
+    """
     """
     Builds a Paystack-mirrored webhook payload and routes it internally through
     the shared webhook ingestion logic, bypassing HMAC signature verification.
@@ -17,7 +22,7 @@ def trigger_transfer(db: Session, sender_name: str, simulated_amount: float, vir
         "event": "charge.success",
         "data": {
             "reference": reference,
-            # Store amount as plain Naira — ingest_settlement detects simulation channel
+            # Minor units, like a real gateway (kobo/cents/pesewas)
             "amount": simulated_amount,
             "gateway_response": "Successful",
             "channel": "simulation",

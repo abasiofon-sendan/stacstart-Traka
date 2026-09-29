@@ -13,7 +13,9 @@ router = APIRouter(
 @router.post("/signup", response_model=schemas.AccountResponse, status_code=status.HTTP_201_CREATED)
 def signup(account_in: schemas.AccountCreate, db: Session = Depends(get_db)):
     """
-    Create a new account with business name, phone number, nin, and a 6-digit pin.
+    Create a new account with business name, phone number, country
+    (NG/KE/GH/UG, default NG) and a 6-digit pin. Currency follows the
+    country and seed products are stocked automatically.
     """
     return service.create_account(db=db, account_in=account_in)
 

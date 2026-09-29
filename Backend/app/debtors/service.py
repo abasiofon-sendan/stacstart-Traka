@@ -2,6 +2,15 @@ from sqlalchemy.orm import Session
 from app.debtors import models, schemas
 from fastapi import HTTPException
 from app.activity.service import log_activity
+from app.core.countries import format_money
+from app.accounts import models as acct_models
+
+def _account_country_currency(db: Session, account_id: str) -> tuple[str, str]:
+    acc = db.query(acct_models.Account).filter(
+        acct_models.Account.id == account_id).first()
+    if acc and acc.country and acc.currency:
+        return acc.country, acc.currency
+    return "NG", "NGN"
 
 def get_debtors_summary(db: Session, account_id: str):
     debtors = db.query(models.Debtor).filter(
@@ -9,13 +18,16 @@ def get_debtors_summary(db: Session, account_id: str):
         models.Debtor.status == "Unpaid"
     ).all()
     total_outstanding = sum(d.amount for d in debtors)
-    return {"total_outstanding": total_outstanding, "debtors": debtors}
+    _, currency = _account_country_currency(db, account_id)
+    return {"total_outstanding": total_outstanding, "currency": currency, "debtors": debtors}
 
 def create_debtor(db: Session, debtor_in: schemas.DebtorCreate, account_id: str):
+    _, currency = _account_country_currency(db, account_id)
     db_debtor = models.Debtor(
         account_id=account_id,
         name=debtor_in.name,
-        amount=debtor_in.amount,
+        amount=int(debtor_in.amount),
+        currency=currency,
         items_summary=debtor_in.items_summary,
         due_date=debtor_in.due_date
     )
@@ -27,7 +39,8 @@ def create_debtor(db: Session, debtor_in: schemas.DebtorCreate, account_id: str)
             debtor_id=db_debtor.id,
             product_name=item_in.product_name,
             qty=item_in.qty,
-            price=item_in.price
+            price=int(item_in.price),
+            currency=currency,
         )
         db.add(db_item)
 
@@ -39,7 +52,7 @@ def create_debtor(db: Session, debtor_in: schemas.DebtorCreate, account_id: str)
         account_id=account_id,
         activity_type="debtor_created",
         title="Debtor Added",
-        description=f"{db_debtor.name} added with outstanding balance of ₦{db_debtor.amount:,.2f}",
+        description=f"{db_debtor.name} added with outstanding balance of {format_money(db_debtor.amount, currency)}",
         event_metadata={
             "debtor_id": db_debtor.id,
             "debtor_name": db_debtor.name,
@@ -68,12 +81,14 @@ def settle_debt(db: Session, debtor_id: str, account_id: str):
     
     from app.transactions import schemas as txn_schemas
     from app.transactions import service as txn_service
-    
+
+    _, currency = _account_country_currency(db, account_id)
     txn_in = txn_schemas.TransactionCreate(
         title=f"Debt Repayment: {debtor.name}",
         details=f"Settlement of outstanding debt: {debtor.items_summary}",
-        amount=debtor.amount,
-        profit=0.0,
+        amount=int(debtor.amount),
+        profit=0,
+        currency=currency,
         payment_method="Transfer",
         transaction_type="debt_repayment"
     )

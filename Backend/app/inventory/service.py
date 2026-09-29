@@ -24,9 +24,15 @@ def get_product(db: Session, product_id: str, account_id: str):
     return product
 
 def create_product(db: Session, product_in: schemas.ProductCreate, account_id: str):
+    from app.accounts import models as acct_models
+
+    acc = db.query(acct_models.Account).filter(
+        acct_models.Account.id == account_id).first()
+    currency = acc.currency if acc and acc.currency else "NGN"
     db_product = models.Product(
         account_id=account_id,
-        **product_in.model_dump()
+        currency=currency,
+        **{k: v for k, v in product_in.model_dump().items()},
     )
     db.add(db_product)
     db.commit()

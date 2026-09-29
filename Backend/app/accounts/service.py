@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.accounts import models, schemas
+from app.core.countries import get_country
 from app.db.database import get_db
 
 security = HTTPBearer()
@@ -49,45 +50,80 @@ def generate_virtual_account(phone_number: str) -> str:
         return phone_number[1:]
     return phone_number
 
+def cfg_code(country: str) -> str:
+    return (country or "").strip().upper()
+
+def seed_products_for_account(db: Session, account: models.Account) -> int:
+    """Insert the country's seed catalogue (prices already in minor units)."""
+    from app.inventory import models as inv_models
+
+    try:
+        cfg = get_country(account.country)
+    except KeyError:
+        return 0
+    seeds = cfg.get("seeds", [])
+    existing = (
+        db.query(inv_models.Product)
+        .filter(inv_models.Product.account_id == account.id)
+        .count()
+    )
+    if existing:
+        return 0
+    for s in seeds:
+        db.add(inv_models.Product(
+            account_id=account.id,
+            name=s["name"],
+            cost_price=int(s["cost_minor"]),
+            selling_price=int(s["sell_minor"]),
+            quantity=0,
+            currency=account.currency,
+        ))
+    db.commit()
+    return len(seeds)
+
 def create_account(db: Session, account_in: schemas.AccountCreate) -> schemas.AccountResponse:
     # Check if phone number exists
     existing_phone = db.query(models.Account).filter(models.Account.phone_number == account_in.phone_number).first()
     if existing_phone:
         raise HTTPException(status_code=400, detail="Phone number already registered")
-        
-    # Check if NIN exists
-    existing_nin = db.query(models.Account).filter(models.Account.nin == account_in.nin).first()
-    if existing_nin:
-        raise HTTPException(status_code=400, detail="NIN already registered")
+
+    try:
+        cfg = get_country(account_in.country)
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
     virtual_acc = generate_virtual_account(account_in.phone_number)
-    
+
     db_account = models.Account(
         business_name=account_in.business_name,
         phone_number=account_in.phone_number,
-        nin=account_in.nin,
+        country=cfg_code(account_in.country),
+        currency=cfg["currency"],
         pin_hash=get_pin_hash(account_in.pin),
         virtual_account_number=virtual_acc
     )
     db.add(db_account)
     db.commit()
     db.refresh(db_account)
-    
+
+    seed_products_for_account(db, db_account)
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": db_account.phone_number}, expires_delta=access_token_expires
     )
-    
+
     refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     refresh_token = create_refresh_token(
         data={"sub": db_account.phone_number}, expires_delta=refresh_token_expires
     )
-    
+
     return schemas.AccountResponse(
         id=db_account.id,
         business_name=db_account.business_name,
         phone_number=db_account.phone_number,
-        nin=db_account.nin,
+        country=db_account.country,
+        currency=db_account.currency,
         virtual_account_number=db_account.virtual_account_number,
         access_token=access_token,
         refresh_token=refresh_token

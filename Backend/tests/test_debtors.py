@@ -45,7 +45,8 @@ def setup_account():
             id="dummy-account-id",
             business_name="Dummy Business",
             phone_number="08000000000",
-            nin="NIN1234567",
+            country="NG",
+            currency="NGN",
             pin_hash="hashed_pin"
         )
         db.add(acc)
@@ -58,13 +59,13 @@ def test_create_debtor():
         "/debtors/new",
         json={
             "name": "John Doe",
-            "amount": 500.0,
+            "amount": 50000,  # whole minor units (kobo) = ₦500.00
             "items_summary": "3x Peak Milk",
             "items": [
                 {
                     "product_name": "Peak Milk",
                     "qty": 3,
-                    "price": 166.67
+                    "price": 16667
                 }
             ]
         }
@@ -72,7 +73,8 @@ def test_create_debtor():
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == "John Doe"
-    assert data["amount"] == 500.0
+    assert data["amount"] == 50000
+    assert data["currency"] == "NGN"
     assert len(data["items"]) == 1
     assert data["items"][0]["product_name"] == "Peak Milk"
     return data["id"]

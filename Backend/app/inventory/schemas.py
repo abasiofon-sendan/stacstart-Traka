@@ -4,15 +4,15 @@ from datetime import datetime
 
 class ProductCreate(BaseModel):
     name: str
-    cost_price: float
-    selling_price: float
+    cost_price: int  # whole minor units
+    selling_price: int  # whole minor units
     quantity: int
     low_stock_threshold: Optional[int] = 3
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = None
-    cost_price: Optional[float] = None
-    selling_price: Optional[float] = None
+    cost_price: Optional[int] = None
+    selling_price: Optional[int] = None
     quantity: Optional[int] = None
     low_stock_threshold: Optional[int] = None
 
@@ -20,8 +20,9 @@ class ProductResponse(BaseModel):
     id: str
     account_id: str
     name: str
-    cost_price: float
-    selling_price: float
+    cost_price: int
+    selling_price: int
+    currency: str
     quantity: int
     low_stock_threshold: int
     created_at: datetime

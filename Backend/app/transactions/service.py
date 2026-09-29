@@ -7,7 +7,15 @@ from app.transactions import models as tx_models
 from app.transactions import schemas as tx_schemas
 from app.inventory import models as inv_models
 from app.debtors import models as debtor_models
+from app.accounts import models as acct_models
 from app.activity.service import log_activity
+from app.core.countries import format_money
+
+
+def _account_currency(db: Session, account_id: str) -> str:
+    acc = db.query(acct_models.Account).filter(
+        acct_models.Account.id == account_id).first()
+    return acc.currency if acc and acc.currency else "NGN"
 
 
 # ─── Read ────────────────────────────────────────────────────────────────────
@@ -49,7 +57,8 @@ def create_transaction(
         account_id=account_id,
         reference=f"TXN-{uuid.uuid4().hex[:10].upper()}",
         status="reconciled",
-        **transaction_in.model_dump(),
+        currency=transaction_in.currency or _account_currency(db, account_id),
+        **{k: v for k, v in transaction_in.model_dump().items() if k != "currency"},
     )
     db.add(txn)
     db.commit()
@@ -63,14 +72,15 @@ def _apply_basket(
     db: Session,
     account_id: str,
     items: List[dict],  # [{"product_id": str, "quantity": int}]
-) -> tuple[float, float, str]:
+) -> tuple[int, int, str]:
     """
     Validates each basket item, decrements stock, and returns
     (total_revenue, total_cost, details_string).
     Revenue is sum of selling_price * qty; cost is sum of cost_price * qty.
+    All money in whole minor units.
     """
-    total_revenue = 0.0
-    total_cost = 0.0
+    total_revenue = 0
+    total_cost = 0
     item_labels = []
 
     for item in items:
@@ -126,6 +136,7 @@ def log_cash_sale(
         status="reconciled",
         amount=total_revenue,
         profit=profit,
+        currency=_account_currency(db, account_id),
         payment_method="cash",
         transaction_type="sale",
         title="Cash Sale",
@@ -140,7 +151,7 @@ def log_cash_sale(
         account_id=account_id,
         activity_type="sale_reconciled",
         title="Cash Sale",
-        description=f"₦{txn.amount:,.2f} cash sale — {txn.details}",
+        description=f"{format_money(txn.amount, txn.currency)} cash sale — {txn.details}",
         event_metadata={
             "amount": txn.amount,
             "profit": txn.profit,
@@ -201,7 +212,7 @@ def reconcile_as_sale(
         account_id=account_id,
         activity_type="sale_reconciled",
         title="Sale Reconciled",
-        description=f"₦{txn.amount:,.2f} sale — {txn.details}",
+        description=f"{format_money(txn.amount, txn.currency)} sale — {txn.details}",
         event_metadata={
             "amount": txn.amount,
             "profit": txn.profit,
@@ -217,7 +228,7 @@ def reconcile_as_debt(
     account_id: str,
     reference: str,
     debtor_id: str,
-    repayment_amount: float,
+    repayment_amount: int,
 ) -> tx_models.Transaction:
     """
     Maps an unallocated transaction to a debt repayment.
@@ -237,16 +248,17 @@ def reconcile_as_debt(
     if not debtor:
         raise HTTPException(status_code=404, detail=f"Debtor '{debtor_id}' not found")
 
-    debtor.amount = max(0.0, debtor.amount - repayment_amount)
-    if debtor.amount == 0.0:
+    debtor.amount = max(0, debtor.amount - repayment_amount)
+    if debtor.amount == 0:
         debtor.status = "Paid"
 
     txn.status = "reconciled"
     txn.transaction_type = "debt_repayment"
     txn.payment_method = txn.channel or "transfer"
     txn.title = f"Debt Repayment — {debtor.name}"
-    txn.details = f"₦{repayment_amount:,.2f} credited against outstanding balance"
-    txn.profit = 0.0  # debt repayments carry no margin profit
+    txn.details = (f"{format_money(repayment_amount, txn.currency)} "
+                   f"credited against outstanding balance")
+    txn.profit = 0  # debt repayments carry no margin profit
 
     db.commit()
     db.refresh(txn)
@@ -256,7 +268,8 @@ def reconcile_as_debt(
         account_id=account_id,
         activity_type="debt_repayment_reconciled",
         title="Debt Repayment Reconciled",
-        description=f"₦{repayment_amount:,.2f} credited to {debtor.name}",
+        description=(f"{format_money(repayment_amount, txn.currency)} "
+                     f"credited to {debtor.name}"),
         event_metadata={
             "amount": repayment_amount,
             "debtor_id": debtor_id,

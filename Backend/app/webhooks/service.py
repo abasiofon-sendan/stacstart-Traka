@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from app.transactions import models as tx_models
 from app.accounts import models as acct_models
 from app.activity.service import log_activity
+from app.core.countries import payment_received
 
 
 def ingest_settlement(db: Session, payload: dict) -> dict:
@@ -31,9 +32,12 @@ def ingest_settlement(db: Session, payload: dict) -> dict:
             detail=f"No merchant found for virtual account {virtual_account_number}",
         )
 
-    # Kobo → Naira conversion (gateway amounts arrive as integers in minor units)
-    raw_amount = data.get("amount", 0)
-    amount_naira = raw_amount / 100 if raw_amount > 100 else raw_amount  # simulation sends plain Naira
+    # Gateway amounts arrive as integers in minor units (e.g. Paystack kobo).
+    # Simulation also sends minor units — store as-is, never float-convert.
+    try:
+        amount_minor = int(round(float(data.get("amount", 0))))
+    except (TypeError, ValueError):
+        amount_minor = 0
 
     customer = data.get("customer", {})
     sender_name = (
@@ -59,18 +63,22 @@ def ingest_settlement(db: Session, payload: dict) -> dict:
         sender_name=sender_name,
         channel=data.get("channel", "dedicated_nuban"),
         status="unallocated",
-        amount=amount_naira,
+        amount=amount_minor,
+        currency=account.currency or "NGN",
     )
     db.add(txn)
     db.commit()
     db.refresh(txn)
 
+    pay_title, pay_desc = payment_received(
+        account.country or "NG", txn.amount, txn.sender_name)
+
     log_activity(
         db,
         account_id=account.id,
         activity_type="payment_received",
-        title="Payment Received",
-        description=f"₦{txn.amount:,.2f} received from {txn.sender_name}",
+        title=pay_title,
+        description=pay_desc,
         event_metadata={
             "amount": txn.amount,
             "sender_name": txn.sender_name,
@@ -83,5 +91,6 @@ def ingest_settlement(db: Session, payload: dict) -> dict:
         "reference": txn.reference,
         "transaction_id": txn.id,
         "amount": txn.amount,
+        "currency": txn.currency,
         "account_id": account.id,
     }

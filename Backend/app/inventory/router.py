@@ -1,10 +1,14 @@
 from fastapi import APIRouter, Depends, status, File, UploadFile, HTTPException
+import logging
+import time
 from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.database import get_db
 from app.inventory import schemas, service
 from app.accounts.service import get_current_account_id
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/inventory",
@@ -38,7 +42,8 @@ async def extract_product(
     """
     if len(images) > 3:
         raise HTTPException(status_code=400, detail="Maximum of 3 images allowed")
-    
+
+    started = time.monotonic()
     image_bytes_list = []
     mime_types = []
     for img in images:
@@ -49,4 +54,7 @@ async def extract_product(
         mime_types.append(img.content_type)   # pass real mime: image/jpeg, image/png, image/webp
 
     products = service.extract_product_from_images(image_bytes_list, mime_types)
+    total_kb = sum(len(b) for b in image_bytes_list) // 1024
+    logger.info("extract-product done images=%d upload_kb=%d elapsed=%.1fs",
+                len(images), total_kb, time.monotonic() - started)
     return schemas.ProductExtractionResponse(names=[p["name"] for p in products])

@@ -7,6 +7,13 @@ from sqlalchemy.orm import Session
 from app.transactions import models as tx_models
 from app.inventory import models as inv_models
 from app.debtors import models as debtor_models
+from app.accounts import models as acct_models
+
+
+def _account_currency(db: Session, account_id: str) -> str:
+    acc = db.query(acct_models.Account).filter(
+        acct_models.Account.id == account_id).first()
+    return acc.currency if acc and acc.currency else "NGN"
 
 
 # ─── Dashboard ───────────────────────────────────────────────────────────────
@@ -66,6 +73,7 @@ def get_dashboard(db: Session, account_id: str) -> dict:
         # All-time cards shown on the main dashboard screen
         "total_revenue":          total_revenue,
         "total_profit":           total_profit,
+        "currency":               _account_currency(db, account_id),
 
         # Today's snapshot
         "today_revenue":          today_revenue,
@@ -140,7 +148,7 @@ def get_weekly_report(db: Session, account_id: str) -> dict:
     # ── Daily Sales Pattern (Mon–Sun) ────────────────────────────────────────
     # Build a dict keyed by weekday index 0=Mon … 6=Sun
     day_labels = ["M", "T", "W", "T", "F", "S", "S"]
-    daily_buckets: dict[int, float] = {i: 0.0 for i in range(7)}
+    daily_buckets: dict[int, int] = {i: 0 for i in range(7)}
     for txn in this_week_txns:
         # created_at may be naive (SQLite) or aware — normalise to weekday
         dt = txn.created_at
@@ -208,6 +216,7 @@ def get_weekly_report(db: Session, account_id: str) -> dict:
         "revenue_change":   revenue_change,   # % vs last week, positive = up
         "profit":           this_profit,
         "profit_change":    profit_change,
+        "currency":         _account_currency(db, account_id),
 
         # Chart data
         "daily_sales":      daily_sales,

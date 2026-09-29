@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Float, Integer, ForeignKey, DateTime, func
+from sqlalchemy import Column, String, BigInteger, Integer, ForeignKey, DateTime, func
 from sqlalchemy.orm import relationship
 from app.db.database import Base
 
@@ -21,8 +21,9 @@ class Transaction(Base):
     # Ledger fields (populated on reconciliation or direct creation)
     title = Column(String, nullable=True)
     details = Column(String, nullable=True)
-    amount = Column(Float, nullable=False)
-    profit = Column(Float, nullable=False, default=0.0)
+    amount = Column(BigInteger, nullable=False)  # whole minor units
+    profit = Column(BigInteger, nullable=False, default=0)
+    currency = Column(String(3), nullable=False, default="NGN")
     payment_method = Column(String, nullable=True)
     transaction_type = Column(String, nullable=True)            # "sale" | "debt_repayment" | None
 

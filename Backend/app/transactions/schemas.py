@@ -28,7 +28,7 @@ class ReconcileRequest(BaseModel):
 
     # Required when reconciliation_type == "debt"
     debtor_id: Optional[str] = None
-    repayment_amount: Optional[float] = None
+    repayment_amount: Optional[int] = None  # whole minor units
 
 
 # ─── Direct creation (e.g. debt settlement) ───────────────────────────────────
@@ -36,8 +36,9 @@ class ReconcileRequest(BaseModel):
 class TransactionCreate(BaseModel):
     title: str
     details: Optional[str] = None
-    amount: float
-    profit: float = 0.0
+    amount: int  # whole minor units
+    profit: int = 0
+    currency: Optional[str] = None  # defaults to the account currency
     payment_method: Optional[str] = None
     transaction_type: Optional[str] = None  # "sale" | "debt_repayment"
 
@@ -48,7 +49,8 @@ class UnallocatedTransactionResponse(BaseModel):
     id: int
     reference: Optional[str]
     sender_name: Optional[str]      # shown as "from Chinedu Okafor"
-    amount: float                   # shown as ₦amount
+    amount: int                     # whole minor units
+    currency: str
     channel: Optional[str]
     status: str
     created_at: datetime

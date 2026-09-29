@@ -59,16 +59,9 @@ def normalize_sender(raw: str) -> str:
 
 
 def candidate_phones(sender: str) -> list[str]:
-    """Return E164 + local variants so +234803... matches 0803... accounts."""
-    out = [sender]
-    if sender.startswith("+234"):
-        out.append("0" + sender[4:])
-    elif sender.startswith("234"):
-        out.append("0" + sender[3:])
-        out.append("+" + sender)
-    elif sender.startswith("0"):
-        out.append("+234" + sender[1:])
-    return list(dict.fromkeys(out))
+    """E164 + local variants across all configured countries (see core.countries)."""
+    from app.core.countries import candidate_senders
+    return candidate_senders(sender)
 
 
 def find_account(db: Session, sender: str):
@@ -157,9 +150,14 @@ def download_twilio_media(url: str) -> tuple[bytes, str]:
 
 
 def _create_debtor(db: Session, account_id: str, draft: dict):
+    from app.accounts import models as acct_models
     from app.debtors import schemas as debtor_schemas
     from app.debtors.service import create_debtor
-    amount = float(draft["amount"])
+    from app.core.countries import to_minor
+    acc = db.query(acct_models.Account).filter(
+        acct_models.Account.id == account_id).first()
+    country = acc.country if acc and acc.country else "NG"
+    amount = to_minor(draft["amount"], country)
     items_summary = (draft.get("items_summary") or "").strip() or "Goods (via WhatsApp)"
     due: Optional[date] = None
     if draft.get("due_date"):
@@ -279,7 +277,10 @@ def handle_text_message(
     debtor = _create_debtor(db, account_id, draft)
     logger.info("whatsapp debt created debtor_id=%s account=%s name=%s amount=%s",
                 debtor.id, account_id, debtor.name, debtor.amount)
-    reply = f"Recorded: {debtor.name} — ₦{debtor.amount:,.0f} ({debtor.items_summary})."
+    from app.core.countries import format_money
+    reply = (f"Recorded: {debtor.name} — "
+             f"{format_money(debtor.amount, debtor.currency or 'NGN')} "
+             f"({debtor.items_summary}).")
 
     # — Follow up on missing OPTIONAL info (e.g. dateline) —
     if "due_date" in opt:

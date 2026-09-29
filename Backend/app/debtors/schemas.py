@@ -5,18 +5,19 @@ from datetime import datetime, date
 class DebtorItemCreate(BaseModel):
     product_name: str
     qty: int
-    price: float
+    price: int  # whole minor units
 
 class DebtorItemResponse(DebtorItemCreate):
     id: int
     debtor_id: str
+    currency: str
 
     class Config:
         from_attributes = True
 
 class DebtorCreate(BaseModel):
     name: str
-    amount: float
+    amount: int  # whole minor units (kobo/cents/pesewas; UGX whole)
     items_summary: str
     due_date: Optional[date] = None
     items: List[DebtorItemCreate]
@@ -25,7 +26,8 @@ class DebtorResponse(BaseModel):
     id: str
     account_id: str
     name: str
-    amount: float
+    amount: int
+    currency: str
     items_summary: str
     due_date: Optional[date]
     status: str
@@ -39,5 +41,6 @@ class DebtorLinkResponse(BaseModel):
     link: str
 
 class DebtorsSummaryResponse(BaseModel):
-    total_outstanding: float
+    total_outstanding: int  # whole minor units
+    currency: str
     debtors: List[DebtorResponse]

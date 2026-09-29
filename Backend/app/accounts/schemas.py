@@ -4,7 +4,7 @@ from typing import Optional
 class AccountCreate(BaseModel):
     business_name: str
     phone_number: str
-    nin: str
+    country: str = "NG"
     pin: str = Field(..., min_length=6, max_length=6, pattern="^[0-9]{6}$", description="6 digit PIN")
 
 class AccountLogin(BaseModel):
@@ -15,7 +15,8 @@ class AccountResponse(BaseModel):
     id: str
     business_name: str
     phone_number: str
-    nin: str
+    country: str
+    currency: str
     virtual_account_number: Optional[str] = None
     access_token: str
     refresh_token: str
@@ -27,6 +28,8 @@ class AccountMeResponse(BaseModel):
     id: str
     business_name: str
     phone_number: str
+    country: str
+    currency: str
     virtual_account_number: Optional[str] = None
 
     class Config:
