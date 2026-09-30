@@ -3,10 +3,8 @@ import { ArrowUpRight, Star } from "@phosphor-icons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ease } from "./shared";
-import { activeCountry } from "@/store/country-store";
 
 export function LandingFinalCta() {
-  const country = activeCountry();
   const navigate = useNavigate();
   const reduce = useReducedMotion();
 
@@ -82,7 +80,7 @@ export function LandingFinalCta() {
               “Before, I used to argue with my book. Now my book argues for me.”
             </p>
             <p className="mt-5 text-sm font-semibold">
-              {country.sampleStore}{" "}
+              Eka Aboy{" "}
               <span className="font-normal text-muted-foreground">· Provisions, Uyo</span>
             </p>
           </div>

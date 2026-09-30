@@ -1,6 +1,32 @@
 import { motion, useReducedMotion } from "motion/react";
-import { MapPin } from "@phosphor-icons/react";
 import { ease } from "./shared";
+
+const COUNTRIES = [
+  {
+    flag: "🇳🇬",
+    name: "Nigeria",
+    methods: "Bank transfer, WhatsApp",
+    langs: "English, Pidgin, Hausa",
+  },
+  {
+    flag: "🇬🇭",
+    name: "Ghana",
+    methods: "Bank transfer & mobile money",
+    langs: "English",
+  },
+  {
+    flag: "🇰🇪",
+    name: "Kenya",
+    methods: "Mobile money",
+    langs: "Swahili, English",
+  },
+  {
+    flag: "🇺🇬",
+    name: "Uganda",
+    methods: "Mobile money",
+    langs: "English",
+  },
+];
 
 export function LandingCountries() {
   const reduce = useReducedMotion();
@@ -23,21 +49,24 @@ export function LandingCountries() {
             Cash, transfer, credit, or mobile money, wherever you trade.
           </p>
         </motion.div>
-        <motion.div {...fadeUp(0.08)} className="mx-auto mt-8 max-w-xl">
-          <div className="flex items-center gap-4 rounded-2xl border border-border bg-white px-5 py-4 shadow-card">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <MapPin weight="fill" className="h-5 w-5 text-primary" />
-            </span>
-            <div>
-              <p className="font-bold">
-                Nigeria <span className="ml-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">live now</span>
-              </p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                Bank transfer, WhatsApp, English, Pidgin, Hausa
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
+          {COUNTRIES.map((c, i) => (
+            <motion.div
+              key={c.name}
+              {...fadeUp(i * 0.06)}
+              className="flex items-center gap-4 rounded-2xl border border-border bg-white px-5 py-4 shadow-card"
+            >
+              <span className="text-3xl" aria-hidden>
+                {c.flag}
+              </span>
+              <div>
+                <p className="font-bold">{c.name}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">{c.methods}</p>
+                <p className="text-sm text-muted-foreground">{c.langs}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
