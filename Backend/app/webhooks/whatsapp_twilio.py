@@ -150,14 +150,12 @@ def download_twilio_media(url: str) -> tuple[bytes, str]:
 
 
 def _create_debtor(db: Session, account_id: str, draft: dict):
-    from app.accounts import models as acct_models
+    # Pass MAJOR units (naira float) — create_debtor() owns the single
+    # major->minor conversion. Converting here too double-counts (bug:
+    # ₦5,000 was stored as 50,000,000 kobo).
     from app.debtors import schemas as debtor_schemas
     from app.debtors.service import create_debtor
-    from app.core.countries import to_minor
-    acc = db.query(acct_models.Account).filter(
-        acct_models.Account.id == account_id).first()
-    country = acc.country if acc and acc.country else "NG"
-    amount = to_minor(draft["amount"], country)
+    amount = float(draft["amount"])
     items_summary = (draft.get("items_summary") or "").strip() or "Goods (via WhatsApp)"
     due: Optional[date] = None
     if draft.get("due_date"):
