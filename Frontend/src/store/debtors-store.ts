@@ -11,6 +11,8 @@ interface DebtorsState {
   entries: DebtorEntry[];
   paidDebts: PaidDebt[];
   replaceEntries: (entries: DebtorEntry[]) => void;
+  /** Drop all local debtor records (sign-out). */
+  clearDebtors: () => void;
   logDebt: (name: string, amount: number, date: string, items: DebtorItem[]) => Promise<void>;
   settleDebt: (id: string) => Promise<void>;
 }
@@ -20,6 +22,8 @@ export const useDebtorsStore = create<DebtorsState>()((set, get) => ({
   paidDebts: [],
 
   replaceEntries: (entries) => set({ entries }),
+
+  clearDebtors: () => set({ entries: [], paidDebts: [] }),
 
   logDebt: async (name, amount, date, items) => {
     // Optimistic: show the debt immediately, swap in the server id after.

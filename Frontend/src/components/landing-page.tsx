@@ -2,11 +2,8 @@ import { LandingNav } from "./landing/nav";
 import { LandingHero } from "./landing/hero";
 import { LandingProblem } from "./landing/problem";
 import { LandingHow } from "./landing/how";
-import { LandingDemo } from "./landing/demo";
-import { LandingOwe } from "./landing/owe";
-import { LandingVoice } from "./landing/voice";
-import { LandingDailyClose } from "./landing/daily-close";
-import { LandingStories } from "./landing/stories";
+import { LandingCountries } from "./landing/countries";
+import { LandingWhyDifferent } from "./landing/why-different";
 import { LandingNot } from "./landing/not";
 import { LandingFaq } from "./landing/faq";
 import { LandingFinalCta } from "./landing/final-cta";
@@ -19,11 +16,8 @@ export function LandingPage() {
       <LandingHero />
       <LandingProblem />
       <LandingHow />
-      <LandingDemo />
-      <LandingOwe />
-      <LandingVoice />
-      <LandingDailyClose />
-      <LandingStories />
+      <LandingCountries />
+      <LandingWhyDifferent />
       <LandingNot />
       <LandingFaq />
       <LandingFinalCta />

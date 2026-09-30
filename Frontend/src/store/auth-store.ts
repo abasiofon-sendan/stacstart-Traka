@@ -1,6 +1,12 @@
 import { create } from "zustand";
 import { queryClient } from "@/lib/query-client";
 import { notify } from "./notify";
+import { useSessionStore } from "./session-store";
+import { useInventoryStore } from "./inventory-store";
+import { useDebtorsStore } from "./debtors-store";
+import { useAiStore } from "./ai-store";
+import { useScanStore } from "./scan-store";
+import { useUiStore } from "./ui-store";
 
 interface AuthState {
   authenticated: boolean;
@@ -28,11 +34,19 @@ export const useAuthStore = create<AuthState>()((set) => ({
     );
   },
 
-  // Sign out: drop the stored session, wipe the query cache so nothing
-  // leaks into the next login, then route back to /auth through the same
-  // event the backend 401 handler dispatches.
+  // Sign out: drop the stored session, wipe every per-user detail so
+  // nothing leaks into the next login on this device (server cache,
+  // account/dashboard mirror, stock, debtors, AI chat + voice blobs,
+  // staged scans, open modal targets), then route back to /auth through
+  // the same event the backend 401 handler dispatches.
   logout: () => {
     localStorage.removeItem("traka_user");
+    useAiStore.getState().clearAi();
+    useScanStore.getState().clearScan();
+    useUiStore.getState().closeModal();
+    useSessionStore.getState().clearSession();
+    useInventoryStore.getState().clearInventory();
+    useDebtorsStore.getState().clearDebtors();
     queryClient.clear();
     set({ authenticated: false });
     window.dispatchEvent(new Event("traka:unauthorized"));

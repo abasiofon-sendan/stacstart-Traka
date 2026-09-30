@@ -14,16 +14,10 @@ export function LogoLockup({ onDark = false, className }: LogoLockupProps) {
       to="/"
       aria-label="Traka — go home"
       className={cn(
-        "inline-flex cursor-pointer items-center gap-2 transition-opacity hover:opacity-80",
+        "inline-flex cursor-pointer items-center transition-opacity hover:opacity-80",
         className,
       )}
     >
-      <img
-        src={onDark ? "/favicon.svg" : "/logo.svg"}
-        alt=""
-        aria-hidden
-        className="h-7 w-7"
-      />
       <span
         className={cn(
           "font-display text-lg font-bold tracking-tight",

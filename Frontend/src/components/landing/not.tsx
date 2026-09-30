@@ -22,10 +22,11 @@ export function LandingNot() {
   });
 
   return (
-    <section className="mx-auto max-w-[1400px] px-6 py-16 md:px-12 md:py-24">
-      <motion.div {...fadeUp(0)} className="overflow-hidden rounded-[2rem] bg-foreground text-background">
-        <div className="grid items-stretch lg:grid-cols-2">
-          <div className="p-6 md:p-12">
+    <section className="bg-foreground py-16 text-background md:bg-transparent md:py-24 md:text-foreground">
+      <div className="mx-auto max-w-[1400px] md:px-12">
+        <motion.div {...fadeUp(0)} className="overflow-hidden bg-foreground text-background md:rounded-[2rem]">
+          <div className="grid items-stretch lg:grid-cols-2">
+            <div className="px-6 md:p-12">
             <p className="text-xs font-bold uppercase tracking-widest text-emerald-200">Plain words</p>
             <h2 className="mt-3 text-balance font-display text-[32px] font-extrabold leading-[1.15] tracking-tight md:text-[44px] md:leading-[1.2]">
               What Traka is not.
@@ -83,6 +84,7 @@ export function LandingNot() {
           </div>
         </div>
       </motion.div>
+      </div>
     </section>
   );
 }

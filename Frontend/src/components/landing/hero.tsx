@@ -104,7 +104,7 @@ const ringItems = (country: CountryConfig) => { const demo = country.copy.demo; 
 const mobileItems = (country: CountryConfig) => { const demo = country.copy.demo; return [
   {
     key: "m-cash",
-    className: "right-[5%] top-[13%]",
+    className: "right-[6%] top-[27%]",
     duration: 4.2,
     card: (
       <div className="rounded-lg border border-border bg-white px-2.5 py-1.5 shadow-card">
@@ -186,17 +186,17 @@ export function LandingHero() {
             {...fadeUp(0)}
             className="text-balance font-display text-[38px] font-extrabold leading-[1.12] tracking-tight md:text-[64px] md:leading-[1.15]"
           >
-            Your market day, <span className="text-primary">written down.</span>
+            Run your shop. <span className="text-primary">Skip the paperwork.</span>
           </motion.h1>
           <motion.p {...fadeUp(0.12)} className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground md:text-[23px] md:leading-[1.4]">
-            Sell the way you always have. Traka keeps one clean record of it all.
+            Know your real stock and profit, without lifting a pen.
           </motion.p>
           <motion.div {...fadeUp(0.18)} className="mt-8 flex flex-wrap justify-center gap-3">
             <Button
               onClick={() => navigate({ to: "/auth" })}
               className="hover:-translate-y-0.5"
             >
-              Start writing my day
+              Start tracking your shop
               <ArrowUpRight
                 weight="bold"
                 className="h-4 w-4 animate-arrow-bounce motion-reduce:animate-none"

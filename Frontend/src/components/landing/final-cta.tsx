@@ -51,18 +51,17 @@ export function LandingFinalCta() {
             Free to start
           </p>
           <h2 className="mt-3 text-balance font-display text-[34px] font-extrabold leading-[1.15] tracking-tight md:text-[64px] md:leading-[1.15]">
-            Bring your market day into writing.
+            Your business already runs. Let&apos;s make it visible.
           </h2>
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-white/75">
-            Join the traders turning busy days into clean records — cash, transfers,
-            debts and daily close in one place.
+            Know your real stock and profit, without lifting a pen.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
               onClick={() => navigate({ to: "/auth" })}
               className="bg-white text-pine hover:-translate-y-0.5 hover:bg-gradient-to-b hover:from-white hover:to-secondary hover:shadow-soft-lift"
             >
-              Get started free
+              Try Traka free
               <ArrowUpRight
                 weight="bold"
                 className="h-4 w-4 animate-arrow-bounce motion-reduce:animate-none"

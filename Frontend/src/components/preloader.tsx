@@ -3,9 +3,8 @@ interface PreloaderProps {
 }
 
 /**
- * Full-screen shimmer preloader for non-static (data-fetching) app routes.
- * Glyph only: the favicon's Ledger T mark drawn with rounded stroke caps and
- * no tile — the light band sweeps left → right via `.preloader-glyph`.
+ * Full-screen preloader for non-static (data-fetching) app routes.
+ * Wordmark only — no logo mark on pages.
  */
 export function Preloader({ visible }: PreloaderProps) {
   if (!visible) return null;
@@ -15,7 +14,7 @@ export function Preloader({ visible }: PreloaderProps) {
       aria-label="Loading Traka"
       className="fixed inset-0 z-[100] flex items-center justify-center bg-background animate-in fade-in-0 duration-200"
     >
-      <div className="preloader-glyph h-16 w-16" aria-hidden="true" />
+      <div className="font-display text-3xl font-extrabold tracking-tight text-primary animate-pulse" aria-hidden="true">Traka</div>
       <span className="sr-only">Loading</span>
     </div>
   );

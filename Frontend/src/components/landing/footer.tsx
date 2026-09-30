@@ -3,14 +3,13 @@ import { Button } from "@/components/ui/button";
 import { activeCountry } from "@/store/country-store";
 
 const PRODUCT_LINKS = [
-  { label: "How it works", href: "#how" },
-  { label: "Live demo", href: "#demo" },
-  { label: "Traders", href: "#stories" },
-  { label: "Voice helper", href: "#voice" },
+  { label: "How it works", href: "/#how" },
+  { label: "Features", href: "/features" },
+  { label: "FAQ", href: "/#faq" },
 ];
 
 const COMPANY_LINKS: { label: string; href: string; external?: boolean }[] = [
-  { label: "FAQ", href: "#faq" },
+  { label: "FAQ", href: "/#faq" },
 ];
 
 export function LandingFooter() {
@@ -21,8 +20,7 @@ export function LandingFooter() {
     <footer className="bg-muted">
       <div className="mx-auto grid max-w-[1400px] gap-10 px-6 py-12 md:px-12 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <Link to="/" className="flex cursor-pointer items-center gap-2 transition-opacity hover:opacity-80" aria-label="Traka — go home">
-            <img src="/logo.svg" alt="Traka logo" className="h-8 w-8" />
+          <Link to="/" className="flex cursor-pointer items-center transition-opacity hover:opacity-80" aria-label="Traka — go home">
             <span className="font-display text-xl font-bold">Traka</span>
           </Link>
           <p className="mt-3 max-w-sm leading-relaxed text-muted-foreground">

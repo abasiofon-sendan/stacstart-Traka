@@ -17,6 +17,8 @@ interface SessionState {
   setMe: (me: AccountMeResponse | null) => void;
   setDashboard: (dashboard: DashboardResponse | null) => void;
   setLoading: (loading: LoadingFlags) => void;
+  /** Drop the account/dashboard mirror (sign-out). */
+  clearSession: () => void;
 }
 
 /**
@@ -31,6 +33,12 @@ export const useSessionStore = create<SessionState>()((set) => ({
   setMe: (me) => set({ me }),
   setDashboard: (dashboard) => set({ dashboard }),
   setLoading: (loading) => set({ loading }),
+  clearSession: () =>
+    set({
+      me: null,
+      dashboard: null,
+      loading: { inventory: false, debtors: false, dashboard: false },
+    }),
 }));
 
 export function useAccount(): {

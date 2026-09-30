@@ -131,7 +131,7 @@ export function AppHeader({ activityCount, onOpenMenu, onOpenChat }: AppHeaderPr
         className="absolute left-1/2 flex -translate-x-1/2 items-center lg:hidden"
         aria-label="Traka — go home"
       >
-        <img src="/logo.svg" alt="" className="h-6 w-6" />
+        <span className="font-display text-lg font-extrabold tracking-tight">Traka</span>
       </Link>
 
       {/* Desktop: search pill */}
