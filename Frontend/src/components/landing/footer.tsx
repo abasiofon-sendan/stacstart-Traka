@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { activeCountry } from "@/store/country-store";
 
 const PRODUCT_LINKS = [
   { label: "How it works", href: "/#how" },
@@ -13,7 +12,6 @@ const COMPANY_LINKS: { label: string; href: string; external?: boolean }[] = [
 ];
 
 export function LandingFooter() {
-  const country = activeCountry();
   const navigate = useNavigate();
 
   return (
@@ -24,7 +22,7 @@ export function LandingFooter() {
             <span className="font-display text-xl font-bold">Traka</span>
           </Link>
           <p className="mt-3 max-w-sm leading-relaxed text-muted-foreground">
-            {country.copy.footerLine}
+            One clean record for African traders and small businesses.
             Cash-friendly records without changing how you work.
           </p>
         </div>

@@ -3,6 +3,8 @@ import { UserPlus, CheckCircle, HandCoins, Check, CaretRight } from "@phosphor-i
 import type { DebtorEntry } from "@/store/types";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
+import { RefreshButton } from "@/components/refresh-button";
+import { queryKeys } from "@/lib/query-hooks";
 import { DataTable } from "@/components/data-table";
 import type { DataTableColumn, DataTableFilter } from "@/components/data-table";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -160,10 +162,13 @@ export function DebtorsView({
         title="Debtors"
         description="Customer credit purchases waiting to be cleared."
         actions={
-          <Button variant="destructive" size="lg" onClick={onOpenLogDebt}>
-            <UserPlus weight="bold" />
-            Log Debt
-          </Button>
+          <>
+            <RefreshButton queryKey={queryKeys.debtors.all} label="Refresh debtors" />
+            <Button variant="destructive" size="lg" onClick={onOpenLogDebt}>
+              <UserPlus weight="bold" />
+              Log Debt
+            </Button>
+          </>
         }
       />
 

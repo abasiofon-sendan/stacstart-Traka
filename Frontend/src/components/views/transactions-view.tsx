@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { ArrowsLeftRight, CaretRight } from "@phosphor-icons/react";
 import type { UnallocatedTransactionResponse } from "@/lib/endpoints";
 import { PageHeader } from "@/components/page-header";
+import { RefreshButton } from "@/components/refresh-button";
+import { queryKeys } from "@/lib/query-hooks";
 import { DataTable } from "@/components/data-table";
 import type { DataTableColumn, DataTableFilter } from "@/components/data-table";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -167,6 +169,9 @@ export function TransactionsView({ loading, transactions }: TransactionsViewProp
         eyebrow={`History — ${transactions.length} transactions`}
         title="History"
         description="All sales, transfers and reconciliations."
+        actions={
+          <RefreshButton queryKey={queryKeys.transactions.all} label="Refresh history" />
+        }
       />
 
       <DataTable

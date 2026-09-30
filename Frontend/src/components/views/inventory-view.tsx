@@ -17,6 +17,8 @@ import type { ProductCreate, ProductUpdate } from "@/lib/endpoints";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/page-header";
+import { RefreshButton } from "@/components/refresh-button";
+import { queryKeys } from "@/lib/query-hooks";
 import { DataTable } from "@/components/data-table";
 import type { DataTableColumn } from "@/components/data-table";
 import { ResponsiveDialog } from "@/components/responsive-dialog";
@@ -327,6 +329,7 @@ export function InventoryView({
         description="Stock levels, costs and margins at a glance."
         actions={
           <>
+            <RefreshButton queryKey={queryKeys.inventory.all} label="Refresh inventory" />
             <Button
               variant="outline"
               size="lg"
@@ -407,8 +410,8 @@ export function InventoryView({
                     alt={p.name}
                     className="mb-2 h-16 w-full rounded-sm border border-border object-cover"
                   />
-                  <h5 className="truncate text-[11px] font-bold text-foreground">{p.name}</h5>
-                  <div className="mt-1 flex items-center justify-between text-[9px] text-muted-foreground">
+                  <h5 className="w-full truncate text-[11px] font-bold text-foreground">{p.name}</h5>
+                  <div className="mt-1 flex w-full items-center justify-between gap-1 text-[9px] text-muted-foreground">
                     <span>
                       Qty: <b>{p.qty}</b>
                     </span>

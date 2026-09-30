@@ -16,9 +16,14 @@ export function LandingFaq() {
   });
 
   return (
-    <section id="faq" className="mx-auto max-w-[900px] scroll-mt-24 px-6 pb-16 md:pb-24">
+    <section
+      id="faq"
+      className="mx-auto max-w-[900px] scroll-mt-24 px-6 py-16 md:pb-24"
+    >
       <motion.div {...fadeUp(0)} className="text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-primary">Questions</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-primary">
+          Questions
+        </p>
         <h2 className="mt-3 text-balance font-display text-[32px] font-extrabold leading-[1.15] tracking-tight md:text-[44px] md:leading-[1.2]">
           You might be wondering…
         </h2>
@@ -35,9 +40,20 @@ export function LandingFaq() {
                 aria-expanded={open}
               >
                 <span>{f.q}</span>
-                <span className={cn("shrink-0 rounded-full border border-border px-2.5 py-1 text-sm transition-transform", open && "rotate-45")}>+</span>
+                <span
+                  className={cn(
+                    "shrink-0 rounded-full border border-border px-2.5 py-1 text-sm transition-transform",
+                    open && "rotate-45",
+                  )}
+                >
+                  +
+                </span>
               </Button>
-              {open && <p className="pb-5 text-base leading-relaxed text-muted-foreground">{f.a}</p>}
+              {open && (
+                <p className="pb-5 text-base leading-relaxed text-muted-foreground">
+                  {f.a}
+                </p>
+              )}
             </div>
           );
         })}
